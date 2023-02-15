@@ -1,0 +1,19 @@
+{% extends "base_general_template.html" %}
+
+{% block title %} Kizuna Project{% endblock %}
+
+{% block content %}
+<h1>Kizuna Project</h1>
+
+  <p>Welcome to <em>Kizuna Project</em>, a my first pet project</p>
+
+<h2>Statistic date:</h2>
+
+  <p>Описание проекта дописать что-нибудь:</p>
+  <ul>
+    <li><strong>All import Webinar:</strong> {{ webroom_all }}</li>
+    <li><strong>Your import webinar:</strong> {{ webroom_quantity }}</li>
+  </ul>
+  <p>You have visited this page {{ num_visits }}{% if num_visits == 1 %} time{% else %} times{% endif %}.</p>
+
+{% endblock %}

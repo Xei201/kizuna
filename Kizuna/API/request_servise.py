@@ -17,7 +17,7 @@ def get_token_bizon(request):
 
 def request_biz(webinar_id, request):
     headers = {"X-Token": get_token_bizon(request)}
-    url = f"https://online.bizon365.ru/api/v1/webinars/reports/getviewers?webinarId={str(webinar_id)}&skip=0&limit=100"
+    url = f"https://online.bizon365.ru/api/v1/webinars/reports/getviewers?webinarId={str(webinar_id)}&skip=0&limit=1000"
     response = requests.get(url, headers=headers)
     return response
 
@@ -68,3 +68,12 @@ def import_gk(webinar_id, request):
     webroom.result_upload = True
     webroom.save()
 
+
+def get_bizon_web_list(request, webroom_quantity):
+    token_bizon = TokenImport.objects.get(user=request.user).token_bizon
+    headers = {"X-Token": token_bizon}
+    webroom_quantity = request.POST.get("quantity_webroom")
+    url = f"https://online.bizon365.ru/api/v1/webinars/reports/getlist?skip=0&limit={webroom_quantity}"
+    response = requests.get(url, headers=headers)
+    dict_webroom = response.json()
+    return dict_webroom["list"]

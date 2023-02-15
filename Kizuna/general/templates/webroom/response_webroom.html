@@ -1,0 +1,23 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>Webinar List</h1>
+
+    {% if list_webinar %}
+    <ul>
+
+      {% for webinar in list_webinar %}
+      <li>
+          <p>{{ webinar.name }}</p>
+          <p>{{ webinar.type }}</p>
+          <p>{{ webinar.webinarId }}</p>
+          <p></p>
+      </li>
+      {% endfor %}
+
+    </ul>
+    {% else %}
+      <p>ERROR.</p>
+    {% endif %}
+{% endblock %}

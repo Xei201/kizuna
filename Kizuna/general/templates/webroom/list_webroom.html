@@ -1,0 +1,23 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>Webroom List</h1>
+
+    {% if webrooms %}
+    <ul>
+
+      {% for web in webrooms %}
+      <li>
+          <p>Name: {{ web.webinarId }}</p>
+          <p>ID: {{ web.roomid }} </p>
+          <p>Create: {{ web.create }} </p>
+          <p>Result: {{ web.result_upload }} </p>
+      </li>
+      {% endfor %}
+
+    </ul>
+    {% else %}
+      <p>There are no webroom in the library.</p>
+    {% endif %}
+{% endblock %}
