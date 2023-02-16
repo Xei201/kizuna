@@ -6,13 +6,21 @@ from .models import WebroomTransaction, ViewersImport, TokenImport
 
 
 def get_token_getcourse(request):
-    token = request.GET.get("token")
-    return str(TokenImport.objects.get(token=token).token_gk)
+    if request.GET.get("token", ''):
+        token = request.GET.get("token")
+        return str(TokenImport.objects.get(token=token).token_gk)
+    else:
+        user = request.user
+        return str(TokenImport.objects.get(user=user).token_gk)
 
 
 def get_token_bizon(request):
-    token = request.GET.get("token")
-    return str(TokenImport.objects.get(token=token).token_bizon)
+    if request.GET.get("token", ''):
+        token = request.GET.get("token")
+        return str(TokenImport.objects.get(token=token).token_bizon)
+    else:
+        user = request.user
+        return str(TokenImport.objects.get(user=user).token_bizon)
 
 
 def request_biz(webinar_id, request):
@@ -29,6 +37,7 @@ def export_bizon(webinar_id, request):
     webroomm_transaction_id = webroom.id
     for user in dict_users["viewers"]:
         viewer = ViewersImport()
+        viewer.name = user.get("name", 'Not found')
         viewer.email = user["email"]
         viewer.phone = user.get("phone", 'Not found')
         viewer.view = (int(user["viewTill"]) - int(user['view'])) / 60000
@@ -61,19 +70,20 @@ def import_gk(webinar_id, request):
             'key': token_getcourse,
             'params': encoded_params
         }
-        r = requests.post(f'https://dimapravvideo.getcourse.ru/pl/api/users/', data=data)
-        if r.status_code == 200:
-            viewer.import_to_gk = True
-            viewer.save()
+        r = requests.post(f'https://senseat.getcourse.ru/pl/api/users/', data=data)
     webroom.result_upload = True
     webroom.save()
 
 
 def get_bizon_web_list(request, webroom_quantity):
-    token_bizon = TokenImport.objects.get(user=request.user).token_bizon
-    headers = {"X-Token": token_bizon}
-    webroom_quantity = request.POST.get("quantity_webroom")
-    url = f"https://online.bizon365.ru/api/v1/webinars/reports/getlist?skip=0&limit={webroom_quantity}"
+    headers = {"X-Token": get_token_bizon(request)}
+    date_min = request.GET.get("date_min")
+    date_max = request.GET.get("date_max")
+    if not date_min:
+        url = f"https://online.bizon365.ru/api/v1/webinars/reports/getlist?skip=0&limit={webroom_quantity}"
+    else:
+        url = f"https://online.bizon365.ru/api/v1/webinars/reports/getlist?skip=0&limit={webroom_quantity}" \
+                f"&minDate={date_min}T00:00:00&maxDate={date_max}T00:00:00"
     response = requests.get(url, headers=headers)
     dict_webroom = response.json()
     return dict_webroom["list"]

@@ -6,13 +6,14 @@
 
     {% if list_webinar %}
     <ul>
-
       {% for webinar in list_webinar %}
+
       <li>
-          <p>{{ webinar.name }}</p>
-          <p>{{ webinar.type }}</p>
-          <p>{{ webinar.webinarId }}</p>
-          <p></p>
+          <p><b>Name:</b> {{ webinar.name }}</p>
+          <p><b>Type:</b> {{ webinar.type }} </p>
+          <p><b>WebinarId:</b> {{ webinar.webinarId }} </p>
+          <p><b>Viewers:</b> {{ webinar.count1 }} </p>
+          <a href="{% url 'start-hand-import' %}?roomid={{ webinar.name }}&event={{ webinar.type }}&webinarId={{ webinar.webinarId }}">Start Import</a>
       </li>
       {% endfor %}
 

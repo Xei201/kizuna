@@ -32,8 +32,8 @@ class WebroomTransaction(models.Model):
 class TokenImport(models.Model):
     token = models.UUIDField(primary_key=True,
                              default=get_default_field_token)
-    token_gk = models.CharField(max_length=100, default=None, null=True)
-    token_bizon = models.CharField(max_length=100, default=None, null=True)
+    token_gk = models.CharField(max_length=260, default=None, null=True)
+    token_bizon = models.CharField(max_length=2600, default=None, null=True)
     create = models.DateTimeField(auto_now_add=True)
     update = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -46,6 +46,7 @@ class TokenImport(models.Model):
 
 
 class ViewersImport(models.Model):
+    name = models.CharField(max_length=200, default='Not found')
     email = models.EmailField(max_length=200)
     phone = models.CharField(max_length=200)
     view = models.CharField(max_length=200)

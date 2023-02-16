@@ -1,0 +1,22 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>Viewers List</h1>
+
+    {% if list_viewers %}
+    <ul>
+
+      {% for viewer in list_viewers %}
+      <li>
+          <p><b>Email:</b> {{ viewer.email }}</p>
+          <p><b>Phone:</b> {{ viewer.phone }}</p>
+          <p><b>View:</b> {{ viewer.view }} Min</p>
+      </li>
+      {% endfor %}
+
+    </ul>
+    {% else %}
+      <p>There are no list viewers in the Webinar.</p>
+    {% endif %}
+{% endblock %}

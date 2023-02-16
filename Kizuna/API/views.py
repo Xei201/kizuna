@@ -12,6 +12,10 @@ class InitialImportAPIView(generics.CreateAPIView):
     serializer_class = WebroomSerializer
     permission_classes = (SuccessToken, )
 
+    def perform_create(self, serializer):
+        user_id = TokenImport.objects.get(token=self.request.GET.get('token')).user
+        serializer.save(user_id=user_id)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
