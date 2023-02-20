@@ -1,0 +1,19 @@
+{% extends "base_general_template.html" %}
+
+{% block content %}
+  <h1>Параметры: {{ webroom.webinarId }}</h1>
+
+
+  <p><strong>Тип мероприятия:</strong> {{ webroom.event }}</p>
+  <p><strong>Серийны номер:</strong> {{ webroom.roomid }}</p>
+  <p><strong>Название:</strong> {{ webroom.webinarId }}</p>
+  <p><strong>Дата создание:</strong> {{ webroom.create|date:"d.m.Y, H:i" }}</p>
+  <p><strong>Дата обновления данных:</strong> {{ webroom.update|date:"d.m.Y, H:i" }}</p>
+  <p><strong>Успешна ли загрузка на геткурс:</strong> {{ webroom.result_upload }}</p>
+  <p><strong>Всего импортировано людей:</strong> {{ webroom.viewersimport_set.all.count }}</p>
+  <p>
+    <a href="">Получить список импортированных пользователей</a> |
+    <a href="">Запустить повторный импорт пользователей</a>
+  </p>
+
+{% endblock %}

@@ -11,8 +11,10 @@
       <li>
           <p><b>Name:</b> {{ web.webinarId }}</p>
           <p><b>ID:</b> {{ web.roomid }}</p>
-          <p><b>Create:</b> {{ web.create }} </p>
+          <p><b>Create:</b> {{ web.create|date:"d.m.Y, H:i" }} </p>
           <p><b>Result:</b> {{ web.result_upload }} </p>
+          <p><a href="{{ web.get_absolute_url }}">Detail</a> </p>
+
       </li>
       {% endfor %}
 

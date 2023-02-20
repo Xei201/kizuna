@@ -1,8 +1,7 @@
-import uuid
-
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from django.urls import reverse
 
 
 def get_default_field_token():
@@ -25,6 +24,11 @@ class WebroomTransaction(models.Model):
     class META:
         ordering = ["create"]
 
+
+    def get_absolute_url(self):
+        return reverse('detail-webroom', args=[str(self.id)])
+
+
     def __str__(self):
         return self.webinarId
 
@@ -39,6 +43,7 @@ class TokenImport(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
+        permissions = (("can_request", "Has request to GK, Bizon"),)
         ordering = ["create"]
 
     def __str__(self):

@@ -128,3 +128,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+URL_BIZON_API = 'https://online.bizon365.ru/api/v1'
+
+URL_BIZON_WEBINAR = 'webinars/reports'
+
+URL_GETCOURSE_API = "https://senseat.getcourse.ru/pl/api/users/"
