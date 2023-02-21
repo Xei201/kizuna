@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from rest_framework import generics
 
-from . import request_servise
+from .request_servise import RequestBizon, RequestGetcorse
 from .models import WebroomTransaction, ViewersImport, TokenImport
 from .serializers import WebroomSerializer
 from .permissions import SuccessToken
@@ -16,14 +16,15 @@ class InitialImportAPIView(generics.CreateAPIView):
         user_id = TokenImport.objects.get(token=self.request.GET.get('token')).user
         serializer.save(user_id=user_id)
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    def create(self, *args, **kwargs):
+        serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         webinar_id = serializer.data["webinarId"]
-        request_servise.export_bizon(webinar_id, request)
-        request_servise.import_gk(webinar_id, request)
-        return HttpResponse("<h1>Successfully created</h1>")
+        export = RequestBizon(self.request)
+        export.export_viwers(webinar_id)
+        imp = RequestGetcorse(self.request)
+        imp.import_viewers(webinar_id)
 
 
 

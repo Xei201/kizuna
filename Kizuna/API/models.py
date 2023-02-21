@@ -24,10 +24,14 @@ class WebroomTransaction(models.Model):
     class META:
         ordering = ["create"]
 
-
     def get_absolute_url(self):
         return reverse('detail-webroom', args=[str(self.id)])
 
+    def get_import_url(self):
+        return reverse('reimport-webroom', args=[str(self.id)])
+
+    def get_export_csv_url(self):
+        return reverse('upload-webroom', args=[str(self.id)])
 
     def __str__(self):
         return self.webinarId
