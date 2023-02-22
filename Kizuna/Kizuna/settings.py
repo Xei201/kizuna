@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'API.apps.APIConfig',
     'general.apps.GeneralConfig',
     'rest_framework',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -50,9 +51,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'Kizuna.urls'
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 TEMPLATES = [
     {
@@ -133,4 +139,6 @@ URL_BIZON_API = 'https://online.bizon365.ru/api/v1'
 
 URL_BIZON_WEBINAR = 'webinars/reports'
 
-URL_GETCOURSE_API = "https://senseat.getcourse.ru/pl/api/users/"
+URL_GETCOURSE_API = ".getcourse.ru/pl/api"
+
+URL_GETCOURSE_API_USERS = "users"

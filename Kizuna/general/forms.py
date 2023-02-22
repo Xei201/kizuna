@@ -15,7 +15,8 @@ class QuantityWebroom(forms.Form):
         date_min = self.cleaned_data["date_min"]
         date_max = self.cleaned_data["date_max"]
 
-        if not date_max: return date_max
+        if not date_max:
+            return date_max
 
         if date_min > date_max:
             raise ValidationError(_("Конечная дата должна быть больше стартовой"))

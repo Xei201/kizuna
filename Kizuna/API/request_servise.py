@@ -4,10 +4,11 @@ import requests
 from os import path
 
 from Kizuna import settings
+from general.exceptions import NoValidTokenService, NoSpecifiedTokenService
 from .models import WebroomTransaction, ViewersImport, TokenImport
 
 
-class ImportToken():
+class RequestImport():
     def __init__(self, request):
         self.request = request
 
@@ -29,15 +30,28 @@ class ImportToken():
 
         return TokenImport.objects.get(**params_user).token_bizon
 
+    def _get_url_getcourse_api(self):
+        params_user = {}
+        if self.request.GET.get("token", ""):
+            params_user["token"] = self.request.GET.get("token", "")
+        else:
+            params_user["user"] = self.request.user
+        name_gk = TokenImport.objects.get(**params_user).name_gk
+        getcourse_api = "https://" + name_gk + settings.URL_GETCOURSE_API
+        return getcourse_api
+
     # Продумать систему валидации и работу исключения
     @classmethod
     def is_valid_token(cls, token):
-        return token != ""
+        if token is None:
+            raise NoSpecifiedTokenService()
+        if len(token) < 10:
+            raise NoValidTokenService()
 
 
-class RequestBizon(ImportToken):
+class RequestBizon(RequestImport):
     def export_viwers(self, webinar_id: str) -> None:
-        dict_viewers = self.get_viewers(webinar_id, self.request)
+        dict_viewers = self.get_viewers(webinar_id)
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         webroomm_transaction_id = webroom.id
         for user in dict_viewers:
@@ -52,7 +66,9 @@ class RequestBizon(ImportToken):
             viewer.save()
 
     def get_web_list(self, webroom_quantity: int) -> dict:
-        headers = {"X-Token": self._get_token_bizon(self.request)}
+        token = self._get_token_bizon()
+        self.is_valid_token(token)
+        headers = {"X-Token": token}
         date_min = self.request.GET.get("date_min")
         date_max = self.request.GET.get("date_max")
         params = {
@@ -66,7 +82,9 @@ class RequestBizon(ImportToken):
         return dict_webroom["list"]
 
     def get_viewers(self, webinar_id: str) -> dict:
-        headers = {"X-Token": self._get_token_bizon(self.request)}
+        token = self._get_token_bizon()
+        self.is_valid_token(token)
+        headers = {"X-Token": token}
         params = {
             "webinarId": webinar_id,
             "skip": 0,
@@ -77,11 +95,12 @@ class RequestBizon(ImportToken):
         return dict_users["viewers"]
 
 
-class RequestGetcorse(ImportToken):
+class RequestGetcorse(RequestImport):
     def import_viewers(self, webinar_id: str) -> None:
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         viewers_list = webroom.viewersimport_set.values()
-        token_getcourse = self._get_token_getcourse(self.request)
+        token_getcourse = self._get_token_getcourse()
+        self.is_valid_token(token_getcourse)
         for viewer in viewers_list:
             user = {
                 "user": {
@@ -101,7 +120,7 @@ class RequestGetcorse(ImportToken):
                 'key': token_getcourse,
                 'params': encoded_params
             }
-            url = settings.URL_GETCOURSE_API
+            url = path.join(self._get_url_getcourse_api(), settings.URL_GETCOURSE_API_USERS)
             r = requests.post(url, data=data)
             if r.json()["success"]:
                 ViewersImport.objects.filter(id=viewer["id"]).update(import_to_gk=True)

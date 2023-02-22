@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
 
 
-from .exceptions import NoModelFoundException, NoCorrectPermission
+from .exceptions import NoModelFoundException, NoCorrectPermissionToken
 from .export_csv import ExportCSV
 from .forms import QuantityWebroom
 
@@ -70,11 +70,12 @@ class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
         imp.import_viewers(webinarId)
 
 
-class ExportViewersCSV(ExportCSV):
+class ExportViewersCSV(PermissionRequiredMixin ,ExportCSV):
     model = ViewersImport
     field_names = ["name", "email", "phone", "view", "buttons", "banners", "create"]
     add_col_names = True
     col_names = ["Имя", "Почта", "Телефон", "Время", "Кнопки", "Баннеры", "Создан"]
+    permission_required = ("catalog.can_request",)
 
     def get_queryset(self):
         user = self.request.user
@@ -82,7 +83,7 @@ class ExportViewersCSV(ExportCSV):
         webroom = WebroomTransaction.objects.get(pk=pk)
         if WebroomTransaction.objects.get(pk=pk).user_id != user:
             exception_msg = "No permission"
-            raise NoCorrectPermission(_(exception_msg))
+            raise NoCorrectPermissionToken(_(exception_msg))
         queryset = webroom.viewersimport_set.all()
         if queryset.exists():
             return queryset

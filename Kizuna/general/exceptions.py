@@ -1,5 +1,5 @@
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 
 
 class NoModelFoundException(ImproperlyConfigured):
@@ -7,6 +7,17 @@ class NoModelFoundException(ImproperlyConfigured):
     pass
 
 
-class NoCorrectPermission(PermissionError):
+class NoCorrectPermissionToken(PermissionDenied):
     """No permission"""
     pass
+
+
+class NoValidTokenService(ValidationError):
+    """Not valid token Service"""
+    pass
+
+
+class NoSpecifiedTokenService(ValidationError):
+    """Not entered token Service"""
+    pass
+
