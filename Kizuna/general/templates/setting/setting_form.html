@@ -1,0 +1,16 @@
+{% extends "base_general_template.html" %}
+
+{% block content %}
+
+<h3>Введите ниже API token Getcourse, название Вашего Getcourse проекта
+    и API token с платформы Bizon365</h3>
+
+<form action="" method="post">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="Submit" />
+
+</form>
+{% endblock %}

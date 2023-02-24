@@ -9,6 +9,8 @@ def get_default_field_token():
 
 
 class WebroomTransaction(models.Model):
+    """Модель хранящая данные о переданных вебинарах и их статусы"""
+
     event = models.CharField(max_length=200)
     roomid = models.CharField(max_length=200)
     webinarId = models.CharField(max_length=200)
@@ -38,6 +40,8 @@ class WebroomTransaction(models.Model):
 
 
 class TokenImport(models.Model):
+    """Модель хранящая токены от сервисов пользователей"""
+
     token = models.UUIDField(primary_key=True,
                              default=get_default_field_token)
     token_gk = models.CharField(max_length=260, default=None, null=True)
@@ -56,6 +60,8 @@ class TokenImport(models.Model):
 
 
 class ViewersImport(models.Model):
+    """Модель хранящая данные переданных пользователей"""
+
     name = models.CharField(max_length=200, default='Not found')
     email = models.EmailField(max_length=200)
     phone = models.CharField(max_length=200)

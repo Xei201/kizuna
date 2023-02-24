@@ -2,7 +2,7 @@ from django.urls import path, re_path, include
 from . import views
 
 hand_import_patterns = [
-    path('', views.hand_import, name="hand-import"),
+    path('', views.HandImportView.as_view(), name="hand-import"),
     re_path(r'^list_webinar/(?P<wq>\d+)$', views.ExportWebroomListView.as_view(), name="get-bizon-web"),
     path('list_webinar/start_import', views.HandImportViewersListView.as_view(), name="start-hand-import"),
 ]
@@ -18,4 +18,5 @@ urlpatterns = [
     path('', views.index, name="index"),
     path('my_webroom/', include(webroom_patterns)),
     path('hand_import/', include(hand_import_patterns)),
+    path('setting', views.SettingsUpdateView.as_view(), name="setting"),
 ]

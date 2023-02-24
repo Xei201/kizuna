@@ -1,28 +1,29 @@
 from urllib.parse import urlencode
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.utils.encoding import force_str
-from django.views import generic
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views import generic, View
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.http import HttpResponseRedirect, HttpResponse
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
 
-
 from .exceptions import NoModelFoundException, NoCorrectPermissionToken
 from .export_csv import ExportCSV
-from .forms import QuantityWebroom
+from .forms import QuantityWebroom, SettingForm
 
 import datetime
 
-from API.models import WebroomTransaction, ViewersImport
+from API.models import WebroomTransaction, ViewersImport, TokenImport
 from API.request_servise import RequestBizon, RequestGetcorse
 
 
 @permission_required("catalog.can_request")
 def index(request):
+    """Главная страница выводящая общие данные статистики"""
+
     webroom_all = WebroomTransaction.objects.all().count()
     webroom_quantity = WebroomTransaction.objects.filter(user_id=request.user).count()
     return render(request, "index.html", context={
@@ -31,7 +32,9 @@ def index(request):
     })
 
 
-class WebroomList(generic.ListView):
+class WebroomList(PermissionRequiredMixin, generic.ListView):
+    """Список вебинаров импортированных юзером"""
+
     model = WebroomTransaction
     context_object_name = "webrooms"
     template_name = 'webroom/list_webroom.html'
@@ -42,7 +45,9 @@ class WebroomList(generic.ListView):
         return WebroomTransaction.objects.filter(user_id=self.request.user).order_by('create')
 
 
-class WebroomDetail(generic.DetailView):
+class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
+    """Даныые по конкретному импорту пользователей"""
+
     model = WebroomTransaction
     template_name = "webroom/detail_webroom.html"
     context_object_name = "webroom"
@@ -50,6 +55,8 @@ class WebroomDetail(generic.DetailView):
 
 
 class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
+    """Список пользователей испортированны по повторному импорту"""
+
     model = ViewersImport
     template_name = 'webroom/list_viewers.html'
     context_object_name = "list_viewers"
@@ -70,7 +77,9 @@ class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
         imp.import_viewers(webinarId)
 
 
-class ExportViewersCSV(PermissionRequiredMixin ,ExportCSV):
+class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
+    """Генерирует CSV файл с списком импортированных людей"""
+
     model = ViewersImport
     field_names = ["name", "email", "phone", "view", "buttons", "banners", "create"]
     add_col_names = True
@@ -106,29 +115,34 @@ class ExportViewersCSV(PermissionRequiredMixin ,ExportCSV):
             raise NoModelFoundException(_(exception_msg))
         return self.filename
 
-    def get(self, request, pk):
-        return self._create_csv()
 
+class HandImportView(PermissionRequiredMixin, FormView):
+    """Форма для получения параметров запроса списка вебинаров"""
 
-@permission_required("catalog.can_request")
-def hand_import(request):
-    if request.method == "POST":
-        form = QuantityWebroom(request.POST)
+    template_name = 'webroom/get_webroom.html'
+    form_class = QuantityWebroom
+    permission_required = ("catalog.can_request",)
 
-        if form.is_valid():
-            wq = form.cleaned_data['quantity_webroom']
-            params = {"date_min": form.cleaned_data["date_min"],
-                      "date_max": form.cleaned_data["date_max"]}
+    def form_valid(self, form):
+        self.form = form
+        return super().form_valid(form)
 
-            return HttpResponseRedirect(reverse("get-bizon-web", args=[str(wq)]) + '?' + urlencode(params))
-    else:
-        date_min = datetime.date.today() - datetime.timedelta(weeks=4)
-        date_max = datetime.date.today()
-        form = QuantityWebroom(initial={"date_min": date_min, "date_max": date_max})
-    return render(request, 'webroom/get_webroom.html', {"form": form})
+    def get_success_url(self):
+        wq = self.form.cleaned_data['quantity_webroom']
+        params = {"date_min": self.form.cleaned_data["date_min"],
+                  "date_max": self.form.cleaned_data["date_max"]}
+        return (reverse("get-bizon-web", args=[str(wq)]) + '?' + urlencode(params))
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["date_min"] = datetime.date.today() - datetime.timedelta(weeks=4)
+        initial["date_max"] = datetime.date.today()
+        return initial
 
 
 class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
+    """Список вебнаров в рамках ручного импорта"""
+
     model = None
     template_name = 'webroom/response_webroom.html'
     context_object_name = "list_webinar"
@@ -143,6 +157,7 @@ class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
 
 
 class HandImportViewersListView(ImportViewersListView):
+    """Список пользователей импортированных в ручном режиме"""
 
     def _get_webinar_id(self):
         webinarId = self.request.GET.get('webinarId')
@@ -159,3 +174,23 @@ class HandImportViewersListView(ImportViewersListView):
         export = RequestBizon(self.request)
         export.export_viwers(webinarId)
         super()._import_gk(webinarId)
+
+
+class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
+    """Страница установки token внешних сервисов"""
+
+    model = TokenImport
+    form_class = SettingForm
+    # fields = ["token_gk", "name_gk", "token_bizon"]
+    permission_required = ("catalog.can_request",)
+    template_name = "setting/setting_form.html"
+    success_url = reverse_lazy("setting")
+
+    # Получение объекта через авторизованого юзера
+    def get_object(self, queryset=None):
+        return TokenImport.objects.get(user=self.request.user)
+
+
+
+
+
