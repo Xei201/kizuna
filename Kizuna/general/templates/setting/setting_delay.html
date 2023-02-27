@@ -1,0 +1,17 @@
+{% extends "base_general_template.html" %}
+
+{% block content %}
+  <h1>Настройки</h1>
+  <p>
+    <a href="{% url 'setting' %}">Изменить настройки</a> |
+    {% if user_token.token_gk and user_token.token_bizon %}
+      <a href="{% url 'setting' %}">Открыть настройку подключения интеграции</a> |
+    {% endif %}
+  </p>
+
+  <p><strong>Имя вашего Getcourse аккаунта:</strong> {{ user_token.name_gk }}</p>
+  <p><strong>Token Getcourse:</strong> {{ user_token.token_gk|truncatechars:9 }}</p>
+  <p><strong>Token Bizon:</strong> {{ user_token.token_bizon|truncatechars:9 }}</p>
+
+
+{% endblock %}

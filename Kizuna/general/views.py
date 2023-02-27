@@ -55,7 +55,8 @@ class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
 
 
 class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
-    """Список пользователей испортированны по повторному импорту"""
+    """Ведётся повторный импорт на геткурс, после выводится
+    список пользователей """
 
     model = ViewersImport
     template_name = 'webroom/list_viewers.html'
@@ -181,7 +182,6 @@ class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
 
     model = TokenImport
     form_class = SettingForm
-    # fields = ["token_gk", "name_gk", "token_bizon"]
     permission_required = ("catalog.can_request",)
     template_name = "setting/setting_form.html"
     success_url = reverse_lazy("setting")
@@ -189,6 +189,22 @@ class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
     # Получение объекта через авторизованого юзера
     def get_object(self, queryset=None):
         return TokenImport.objects.get(user=self.request.user)
+
+
+class SettingsDelayView(PermissionRequiredMixin, DeleteView):
+    """Представление токенов юзера"""
+
+    model = TokenImport
+    fields = ["token_gk", "name_gk", "token_bizon"]
+    permission_required = ("catalog.can_request",)
+    template_name = "setting/setting_delay.html"
+    context_object_name = "user_token"
+
+    # Получение объекта через авторизованого юзера
+    def get_object(self, queryset=None):
+        return TokenImport.objects.get(user=self.request.user)
+
+
 
 
 

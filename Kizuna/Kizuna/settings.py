@@ -136,9 +136,66 @@ LOGIN_REDIRECT_URL = '/'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 URL_BIZON_API = 'https://online.bizon365.ru/api/v1'
-
 URL_BIZON_WEBINAR = 'webinars/reports'
-
 URL_GETCOURSE_API = ".getcourse.ru/pl/api"
-
 URL_GETCOURSE_API_USERS = "users"
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(name)-12s %(levelname)-8s %(message)s'
+        },
+        'file': {
+            'format': '%(name)s %(levelname)s %(asctime)s %(module)s %(message)s'
+        },
+        'file-info': {
+            'format': '%(name)s %(levelname)s %(asctime)s %(funcName)s %(module)s %(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'console'
+        },
+        'api-file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'formatter': 'file',
+            'filename': 'api-warning.log'
+        },
+        'view-file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'formatter': 'file',
+            'filename': 'view-warning.log'
+        },
+        'core-file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'formatter': 'file',
+            'filename': 'core-warning.log'
+        },
+        'info-core': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'file-info',
+            'filename': 'info-core.log'
+        },
+        'info-API-transaction': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'formatter': 'file-info',
+            'filename': 'info-API-transaction.log'
+        }
+    },
+    'loggers': {
+        'general': {
+            'level': 'DEBUG',
+            'handlers': ['console', 'file', 'api-file', 'view-file', 'core-file', 'core-info', 'info-API-transaction']
+        }
+    }
+}
+

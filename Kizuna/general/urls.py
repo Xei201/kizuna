@@ -14,9 +14,14 @@ webroom_patterns = [
     re_path('^detail/(?P<pk>\d+)/upload$', views.ExportViewersCSV.as_view(), name="upload-webroom"),
 ]
 
+setting_patterns = [
+    path('', views.SettingsDelayView.as_view(), name="setting-delay"),
+    path('my', views.SettingsUpdateView.as_view(), name="setting"),
+]
+
 urlpatterns = [
     path('', views.index, name="index"),
     path('my_webroom/', include(webroom_patterns)),
     path('hand_import/', include(hand_import_patterns)),
-    path('setting', views.SettingsUpdateView.as_view(), name="setting"),
+    path('setting', include(setting_patterns)),
 ]

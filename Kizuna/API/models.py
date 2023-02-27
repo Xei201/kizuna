@@ -11,17 +11,19 @@ def get_default_field_token():
 class WebroomTransaction(models.Model):
     """Модель хранящая данные о переданных вебинарах и их статусы"""
 
-    event = models.CharField(max_length=200)
-    roomid = models.CharField(max_length=200)
-    webinarId = models.CharField(max_length=200)
+    event = models.CharField(max_length=200, verbose_name='Type_event')
+    roomid = models.CharField(max_length=200, verbose_name='ID_number_webinar_room')
+    webinarId = models.CharField(max_length=200, verbose_name='ID_webinar_event')
     create = models.DateTimeField(auto_now_add=True)
     update = models.DateTimeField(auto_now=True)
     start_upload = models.BooleanField(default=False)
     result_upload = models.BooleanField(default=False)
-    user_id = models.ForeignKey(User,
-                                on_delete=models.SET_NULL,
-                                default=None,
-                                null=True)
+    user_id = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True
+    )
 
     class META:
         ordering = ["create"]
@@ -44,12 +46,27 @@ class TokenImport(models.Model):
 
     token = models.UUIDField(primary_key=True,
                              default=get_default_field_token)
-    token_gk = models.CharField(max_length=260, default=None, null=True)
-    name_gk = models.CharField(max_length=200, default=None, null=True)
-    token_bizon = models.CharField(max_length=2600, default=None, null=True)
+    token_gk = models.CharField(
+        max_length=260,
+        default=None,
+        null=True
+    )
+    name_gk = models.CharField(
+        max_length=200,
+        default=None,
+        null=True
+    )
+    token_bizon = models.CharField(
+        max_length=2600,
+        default=None,
+        null=True
+    )
     create = models.DateTimeField(auto_now_add=True)
     update = models.DateTimeField(auto_now=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE
+    )
 
     class Meta:
         permissions = (("can_request", "Has request to GK, Bizon"),)
@@ -62,17 +79,28 @@ class TokenImport(models.Model):
 class ViewersImport(models.Model):
     """Модель хранящая данные переданных пользователей"""
 
-    name = models.CharField(max_length=200, default='Not found')
+    name = models.CharField(
+        max_length=200,
+        default='Not found'
+    )
     email = models.EmailField(max_length=200)
     phone = models.CharField(max_length=200)
     view = models.CharField(max_length=200)
-    buttons = models.CharField(max_length=200, null=True)
-    banners = models.CharField(max_length=200, null=True)
+    buttons = models.CharField(
+        max_length=200,
+        null=True
+    )
+    banners = models.CharField(
+        max_length=200,
+        null=True
+    )
     create = models.DateTimeField(auto_now_add=True)
     import_to_gk = models.BooleanField(default=False)
-    webroom = models.ForeignKey(WebroomTransaction,
-                                on_delete=models.CASCADE,
-                                null=True)
+    webroom = models.ForeignKey(
+        WebroomTransaction,
+        on_delete=models.CASCADE,
+        null=True
+    )
 
     class Meta:
         ordering = ["create"]

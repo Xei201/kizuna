@@ -160,4 +160,3 @@ class RequestGetcorse(RequestImport):
         url = path.join(("https://" + name_gk + settings.URL_GETCOURSE_API), settings.URL_GETCOURSE_API_USERS)
         r = requests.post(url, data=data)
         return r.json()["success"]
-
