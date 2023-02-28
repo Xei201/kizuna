@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import WebroomTransaction
+from API.models import WebroomTransaction
 
 
 class WebroomSerializer(serializers.ModelSerializer):

@@ -7,7 +7,7 @@ class NoModelFoundException(ImproperlyConfigured):
     pass
 
 
-class NoCorrectPermissionToken(PermissionDenied):
+class NoCorrectPermission(PermissionDenied):
     """No permission"""
     pass
 

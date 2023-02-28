@@ -7,7 +7,7 @@ from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
 
 from API.models import TokenImport
-from API.request_servise import RequestBizon, RequestGetcorse
+from API.core.request_service import RequestBizon, RequestGetcorse
 
 
 class QuantityWebroom(forms.Form):
@@ -33,13 +33,14 @@ class QuantityWebroom(forms.Form):
 
 
 class SettingForm(ModelForm):
-    """Форма внесение token внешний сервис"""
+    """Форма внесение токенов внешний сервисов с проверкой их валидности"""
 
     class Meta:
         model = TokenImport
         fields = ["name_gk", "token_gk", "token_bizon"]
 
     def clean_name_gk(self):
+        """Проверка валидности имени акканта Getcourse"""
         name_gk = self.cleaned_data["name_gk"]
         self.name_gk = name_gk
         if len(name_gk) < 3:

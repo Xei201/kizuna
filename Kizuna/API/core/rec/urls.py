@@ -1,5 +1,5 @@
 from django.urls import path, re_path, include
-from . import views
+from API.core.rec import views
 
 hand_import_patterns = [
     path('', views.HandImportView.as_view(), name="hand-import"),

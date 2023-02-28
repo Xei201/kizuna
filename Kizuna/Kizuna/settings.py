@@ -135,10 +135,16 @@ LOGIN_REDIRECT_URL = '/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Url API service bizon for export
 URL_BIZON_API = 'https://online.bizon365.ru/api/v1'
 URL_BIZON_WEBINAR = 'webinars/reports'
+
+# Url API service getcourse for import
 URL_GETCOURSE_API = ".getcourse.ru/pl/api"
 URL_GETCOURSE_API_USERS = "users"
+
+# Min rate success import viewers to Getcourse
+IMPORT_SUCCESS_RATE = 0.8
 
 LOGGING = {
     'version': 1,
@@ -156,21 +162,9 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
-        },
-        'api-file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'formatter': 'file',
-            'filename': 'api-warning.log'
-        },
-        'view-file': {
-            'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'formatter': 'file',
-            'filename': 'view-warning.log'
         },
         'core-file': {
             'level': 'WARNING',
@@ -183,19 +177,12 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'file-info',
             'filename': 'info-core.log'
-        },
-        'info-API-transaction': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'formatter': 'file-info',
-            'filename': 'info-API-transaction.log'
         }
     },
     'loggers': {
-        'general': {
+        'API': {
             'level': 'DEBUG',
-            'handlers': ['console', 'file', 'api-file', 'view-file', 'core-file', 'core-info', 'info-API-transaction']
+            'handlers': ['console', 'core-file', 'info-core']
         }
     }
 }
-

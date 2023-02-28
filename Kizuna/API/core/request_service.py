@@ -1,11 +1,14 @@
 import base64
 import json
+import logging
+
 import requests
 from os import path
 
 from Kizuna import settings
-from general.exceptions import NoValidTokenService, NoSpecifiedTokenService
-from .models import WebroomTransaction, ViewersImport, TokenImport
+from API.models import WebroomTransaction, ViewersImport, TokenImport
+
+logger = logging.getLogger(__name__)
 
 
 class RequestImport():
@@ -35,7 +38,7 @@ class RequestImport():
         return getcourse_api
 
     def _get_user(self) -> dict:
-        """Ищет юзера в системе"""
+        """Поиск юзера в системе либо через request либо через token"""
 
         params_user = {}
         if self.request.GET.get("token", ""):
@@ -48,10 +51,15 @@ class RequestImport():
 class RequestBizon(RequestImport):
     """Сервис обращающийся к Bizon для получения списков вебинаров и зрителей"""
 
-    def export_viwers(self, webinar_id: str) -> None:
+    def export_viwers(self, webinar_id: str) -> bool:
         """Загрузка списка зрителей в БД"""
 
         dict_viewers = self.get_viewers(webinar_id)
+        if dict_viewers is None:
+            logger.warning(f"Error export viewers Bizon for web {webinar_id},"
+                           f"from request {self.request}")
+            return False
+
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         webroomm_transaction_id = webroom.id
         for user in dict_viewers:
@@ -64,6 +72,8 @@ class RequestBizon(RequestImport):
             viewer.banners = ', '.join([banner["id"] for banner in user.get("banners", None)])
             viewer.webroom_id = webroomm_transaction_id
             viewer.save()
+        logger.info(f"Success export viewers {webinar_id} from Bizon to BD")
+        return True
 
     def get_web_list(self, webroom_quantity: int) -> dict:
         """Получение списка вебинаров"""
@@ -77,9 +87,23 @@ class RequestBizon(RequestImport):
             "minDate": date_min,
             "maxDate": date_max}
         url = path.join(settings.URL_BIZON_API, settings.URL_BIZON_WEBINAR, 'getlist')
-        response = requests.get(url, headers=headers, params=params)
-        dict_webroom = response.json()
-        return dict_webroom["list"]
+        try:
+            response = requests.get(url, headers=headers, params=params)
+        except ConnectionError:
+            logger.warning(f"Connection Error from request {self.request}")
+            dict_webroom = {"Error": {"name": "Connection Error, try later"}}
+            return dict_webroom
+
+        if response.status_code == 200:
+            dict_webroom = response.json()
+            logger.info(f"Success web list from Bizon to view "
+                        f"from request {self.request}")
+            return dict_webroom["list"]
+        else:
+            logger.info(f"Response web list from request {self.request}"
+                           f"web list return code {response.status_code}")
+            dict_webroom = {"Error": {"name": "Bizon server error, try later"}}
+            return dict_webroom
 
     def get_viewers(self, webinar_id: str) -> dict:
         """Получение списка зрителей конкретного вебинара"""
@@ -90,15 +114,27 @@ class RequestBizon(RequestImport):
             "skip": 0,
             "limit": 1000}
         url = path.join(settings.URL_BIZON_API, settings.URL_BIZON_WEBINAR, 'getviewers')
-        response = requests.get(url, headers=headers, params=params)
-        dict_users = response.json()
-        return dict_users["viewers"]
+        try:
+            response = requests.get(url, headers=headers, params=params)
+        except ConnectionError:
+            logger.info(f"Response viewers from request {self.request}"
+                           f"web list return code {response.status_code}")
+            return None
+
+        if response.status_code == 200:
+            dict_users = response.json()
+            logger.info(f"Success viewers list from Bizon to view"
+                        f"from request {self.request}")
+            return dict_users["viewers"]
+        else:
+            logger.warning(f"Response from request {self.request}"
+                           f"viewers list return code {response.status_code}")
+            return None
 
     def _get_headers(self) -> dict:
-        """Нереация хедера"""
+        """Генерация хедера"""
 
         token = self._get_token_bizon()
-        self.is_valid_token(token)
         return {"X-Token": token}
 
     @classmethod
@@ -108,20 +144,25 @@ class RequestBizon(RequestImport):
         headers = {"X-Token": token}
         params = {"limit": 1}
         url = path.join(settings.URL_BIZON_API, settings.URL_BIZON_WEBINAR, 'getlist')
-        response = requests.get(url, headers=headers, params=params)
-        return response.status_code == 200
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            logger.info("Success test token Bizon")
+            return response.status_code == 200
+        except ConnectionError:
+            logger.info(f"Unsuccess test token Bizon")
+            return False
 
 
 class RequestGetcorse(RequestImport):
     """Сервис импортирующий людей на Getcourse"""
 
-    def import_viewers(self, webinar_id: str) -> None:
+    def import_viewers(self, webinar_id: str) -> bool:
         """Импорт списка пользователей на Getcourse"""
 
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         viewers_list = webroom.viewersimport_set.values()
         token_getcourse = self._get_token_getcourse()
-        self.is_valid_token(token_getcourse)
+        success = 0
         for viewer in viewers_list:
             user = {
                 "user": {
@@ -142,11 +183,32 @@ class RequestGetcorse(RequestImport):
                 'params': encoded_params
             }
             url = path.join(self._get_url_getcourse_api(), settings.URL_GETCOURSE_API_USERS)
-            r = requests.post(url, data=data)
-            if r.json()["success"]:
-                ViewersImport.objects.filter(id=viewer["id"]).update(import_to_gk=True)
-        webroom.result_upload = True
-        webroom.save()
+            try:
+                r = requests.post(url, data=data)
+                if r.json()["result"]["success"]:
+                    ViewersImport.objects.filter(id=viewer["id"]).update(import_to_gk=True)
+                    success += 1
+                else:
+                    logger.info(f"Unsuccess import to Getcourse user {viewer['email']}"
+                                f"from webinar {webinar_id}, error massage:"
+                                f"{r.json()['result']['error_message']}")
+            except ConnectionError:
+                logger.warning(f"Unsuccess import to Getcourse user {viewer['email']} "
+                            f"from webinar {webinar_id}")
+
+        if len(viewers_list) > 0:
+            if round(success / len(viewers_list), 2) > settings.IMPORT_SUCCESS_RATE:
+                webroom.result_upload = True
+                webroom.save()
+                logger.info(f"Success import to Getcourse from webinar {webinar_id}")
+                return True
+            else:
+                logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id},"
+                            f"success rate < {settings.IMPORT_SUCCES_RATE}")
+                return False
+        else:
+            logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id} viewers = 0")
+            return True
 
     @classmethod
     def test_token_gk(cls, token, name_gk):
@@ -158,5 +220,11 @@ class RequestGetcorse(RequestImport):
             'params': 'test'
         }
         url = path.join(("https://" + name_gk + settings.URL_GETCOURSE_API), settings.URL_GETCOURSE_API_USERS)
-        r = requests.post(url, data=data)
-        return r.json()["success"]
+        logger.info("Success test token Getcourse")
+        try:
+            r = requests.post(url, data=data)
+            logger.info(f"Success test token Getcourse {name_gk}")
+            return r.json()["success"]
+        except ConnectionError:
+            logger.info(f"Unsuccess test token Getcourse {name_gk}")
+            return False

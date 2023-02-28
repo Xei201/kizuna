@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 import csv
 
 from django.http import HttpResponse
-from django.utils.encoding import force_str, force_str
+from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 
-from .exceptions import NoModelFoundException
+from API.core.exceptions import NoModelFoundException
 
 
 class ExportCSV(View):
