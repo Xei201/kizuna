@@ -1,7 +1,9 @@
 import logging
 import datetime
 
-from rest_framework import generics
+from django.core.exceptions import ValidationError
+from django.http import HttpResponse
+from rest_framework import generics, status
 from urllib.parse import urlencode
 from django.shortcuts import render
 from django.utils.encoding import force_str
@@ -11,7 +13,10 @@ from django.urls import reverse, reverse_lazy
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from .core.exception import BaseExceptions, base_exception
 from .core.exceptions import NoModelFoundException, NoCorrectPermission, NoCorrectPermission
 from .core.export_csv import ExportCSV
 from .forms import QuantityWebroom, SettingForm
@@ -23,11 +28,12 @@ from .core.permissions import SuccessToken
 logger = logging.getLogger(__name__)
 
 
-class InitialImportAPIView(generics.CreateAPIView):
+class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
     """API отвечающая за импорт людей из Bizon в Getcourse"""
     model = WebroomTransaction
     serializer_class = WebroomSerializer
-    permission_classes = (SuccessToken, )
+    #permission_classes = (SuccessToken, )
+    permission_classes = (IsAuthenticated, )
 
     def perform_create(self, serializer):
         user_id = TokenImport.objects.get(token=self.request.GET.get('token')).user
@@ -44,7 +50,7 @@ class InitialImportAPIView(generics.CreateAPIView):
         if export.export_viwers(webinar_id):
             imp = RequestGetcorse(self.request)
             if imp.import_viewers(webinar_id):
-                logger.info(f"Success APO import to Getcourse viewers from API to Bizon "
+                logger.info(f"Success API import to Getcourse viewers from API to Bizon "
                             f"request {self.request}")
             else:
                 logger.warning(f"Fallen API import to Getcourse viewers from API to Bizon "
@@ -52,10 +58,13 @@ class InitialImportAPIView(generics.CreateAPIView):
         else:
             logger.warning(f"Fallen API import to Getcourse viewers from API to Bizon "
                         f"request {self.request}")
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+@base_exception
 @permission_required("catalog.can_request")
 def index(request):
-    """Главная страница выводящая общие данные статистики"""
+    """Представление выводящее общие данные статистики"""
 
     webroom_all = WebroomTransaction.objects.all().count()
     webroom_quantity = WebroomTransaction.objects.filter(user_id=request.user).count()
@@ -65,7 +74,7 @@ def index(request):
     })
 
 
-class WebroomList(PermissionRequiredMixin, generic.ListView):
+class WebroomList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
     """Список вебинаров импортированных юзером"""
 
     model = WebroomTransaction
@@ -79,8 +88,8 @@ class WebroomList(PermissionRequiredMixin, generic.ListView):
         return WebroomTransaction.objects.filter(user_id=user_id).order_by('create')
 
 
-class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
-    """Даныые по конкретному импорту пользователей"""
+class WebroomDetail(BaseExceptions, PermissionRequiredMixin, generic.DetailView):
+    """Данные по конкретному импорту пользователей"""
 
     model = WebroomTransaction
     template_name = "webroom/detail_webroom.html"
@@ -88,7 +97,7 @@ class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
     permission_required = ("catalog.can_request", )
 
 
-class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
+class ImportViewersListView(BaseExceptions, PermissionRequiredMixin, generic.ListView):
     """Ведётся повторный импорт на геткурс, после выводится
     список пользователей """
 
@@ -104,7 +113,7 @@ class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
             webroom_id = WebroomTransaction.objects.get(webinarId=webinarId).id
             return ViewersImport.objects.filter(webroom_id=webroom_id)
         else:
-            dict_error = {"Error": {"name": "Connection Error, try later"}}
+            dict_error = ["Error", "Connection Error, try later"]
             return dict_error
 
     def _get_webinar_id(self):
@@ -115,7 +124,7 @@ class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
         return imp.import_viewers(webinarId)
 
 
-class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
+class ExportViewersCSV(BaseExceptions, PermissionRequiredMixin, ExportCSV):
     """Генерирует CSV файл с списком импортированных людей"""
 
     model = ViewersImport
@@ -126,12 +135,13 @@ class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
 
     def get_queryset(self):
         user = self.request.user
+        print(self.kwargs)
         pk = self.kwargs.get('pk')
         webroom = WebroomTransaction.objects.get(pk=pk)
         if WebroomTransaction.objects.get(pk=pk).user_id != user:
             exception_msg = "No permission"
             logger.warning(f"{user} The user tried to download the "
-                           f"CSV file of someone else's webinar")
+                           f"CSV file of someone else's webinar {pk}")
             raise NoCorrectPermission(_(exception_msg))
         queryset = webroom.viewersimport_set.all()
         if queryset.exists():
@@ -158,8 +168,11 @@ class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
             raise NoModelFoundException(_(exception_msg))
         return self.filename
 
+    def get(self, request, pk):
+        return self._create_csv()
 
-class HandImportView(PermissionRequiredMixin, FormView):
+
+class HandImportView(BaseExceptions, PermissionRequiredMixin, FormView):
     """Форма для получения параметров запроса списка вебинаров"""
 
     template_name = 'webroom/get_webroom.html'
@@ -183,7 +196,7 @@ class HandImportView(PermissionRequiredMixin, FormView):
         return initial
 
 
-class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
+class ExportWebroomListView(BaseExceptions, PermissionRequiredMixin, generic.ListView):
     """Список вебнаров в рамках ручного импорта"""
 
     model = None
@@ -213,14 +226,14 @@ class HandImportViewersListView(ImportViewersListView):
             webroom.save()
         return webinarId
 
-    def _import_gk(self, webinarId: str) -> None:
+    def _import_gk(self, webinarId: str) -> bool:
         export = RequestBizon(self.request)
         if not export.export_viwers(webinarId):
             return False
-        super()._import_gk(webinarId)
+        return super()._import_gk(webinarId)
 
 
-class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
+class SettingsUpdateView(BaseExceptions, PermissionRequiredMixin, UpdateView):
     """Страница установки token внешних сервисов"""
 
     model = TokenImport
@@ -234,7 +247,7 @@ class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
         return TokenImport.objects.get(user=self.request.user)
 
 
-class SettingsDelayView(PermissionRequiredMixin, DeleteView):
+class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, DeleteView):
     """Представление токенов юзера"""
 
     model = TokenImport
@@ -246,5 +259,14 @@ class SettingsDelayView(PermissionRequiredMixin, DeleteView):
     # Получение объекта через авторизованого юзера
     def get_object(self, queryset=None):
         return TokenImport.objects.get(user=self.request.user)
+
+
+def tests(request):
+    try:
+        token = request.GET.get("token")
+        data = TokenImport.objects.filter(token=token).exists()
+    except ValidationError:
+        data = False
+    return HttpResponse(data)
 
 

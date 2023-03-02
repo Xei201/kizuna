@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-
 import requests
 from os import path
 
@@ -63,15 +62,17 @@ class RequestBizon(RequestImport):
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         webroomm_transaction_id = webroom.id
         for user in dict_viewers:
-            viewer = ViewersImport()
-            viewer.name = user.get("name", 'Not found')
-            viewer.email = user["email"]
-            viewer.phone = user.get("phone", 'Not found')
-            viewer.view = (int(user["viewTill"]) - int(user['view'])) / 60000
-            viewer.buttons = ', '.join([button["id"] for button in user.get("buttons", None)])
-            viewer.banners = ', '.join([banner["id"] for banner in user.get("banners", None)])
-            viewer.webroom_id = webroomm_transaction_id
-            viewer.save()
+            if not (ViewersImport.objects.filter(webroom_id=webroomm_transaction_id) &
+                    ViewersImport.objects.filter(email=user["email"])).exists():
+                viewer = ViewersImport()
+                viewer.name = user.get("name", 'Not found')
+                viewer.email = user["email"]
+                viewer.phone = user.get("phone", 'Not found')
+                viewer.view = (int(user["viewTill"]) - int(user['view'])) / 60000
+                viewer.buttons = ', '.join([button["id"] for button in user.get("buttons", None)])
+                viewer.banners = ', '.join([banner["id"] for banner in user.get("banners", None)])
+                viewer.webroom_id = webroomm_transaction_id
+                viewer.save()
         logger.info(f"Success export viewers {webinar_id} from Bizon to BD")
         return True
 
@@ -91,7 +92,7 @@ class RequestBizon(RequestImport):
             response = requests.get(url, headers=headers, params=params)
         except ConnectionError:
             logger.warning(f"Connection Error from request {self.request}")
-            dict_webroom = {"Error": {"name": "Connection Error, try later"}}
+            dict_webroom = ["Error", "Connection Error to List Web, try later"]
             return dict_webroom
 
         if response.status_code == 200:
@@ -102,7 +103,7 @@ class RequestBizon(RequestImport):
         else:
             logger.info(f"Response web list from request {self.request}"
                            f"web list return code {response.status_code}")
-            dict_webroom = {"Error": {"name": "Bizon server error, try later"}}
+            dict_webroom = ["Error", "Connection Error to List Web, try later"]
             return dict_webroom
 
     def get_viewers(self, webinar_id: str) -> dict:

@@ -73,7 +73,7 @@ class TokenImport(models.Model):
         ordering = ["create"]
 
     def __str__(self):
-        return str(self.token)
+        return str(self.user)
 
 
 class ViewersImport(models.Model):

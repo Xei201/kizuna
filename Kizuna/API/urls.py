@@ -14,7 +14,7 @@ hand_import_patterns = [
 webroom_patterns = [
     path('', views.WebroomList.as_view(), name="my-webroom"),
     re_path('^detail/(?P<pk>\d+)$', views.WebroomDetail.as_view(), name="detail-webroom"),
-    re_path('^detail/(?P<pk>\d+)/reimpotr$', views.ImportViewersListView.as_view(), name="reimport-webroom"),
+    re_path('^detail/(?P<pk>\d+)/reimport$', views.ImportViewersListView.as_view(), name="reimport-webroom"),
     re_path('^detail/(?P<pk>\d+)/upload$', views.ExportViewersCSV.as_view(), name="upload-webroom"),
 ]
 
@@ -25,8 +25,9 @@ setting_patterns = [
 
 urlpatterns = [
     path('', views.index, name="index"),
-    path('api/v1/start/', include(api_patterns)),
+    path('api/v1/', include(api_patterns)),
     path('my_webroom/', include(webroom_patterns)),
     path('hand_import/', include(hand_import_patterns)),
     path('setting', include(setting_patterns)),
+    path('test', views.tests),
 ]
