@@ -5,20 +5,24 @@
     <h1>Webroom List</h1>
 
     {% if webrooms %}
-    <ul>
+        {% if webrooms.0 == 'Error' %}
+            <h2>{ webrooms.1 }</h2>
+        {% else %}
+            <ul>
 
-      {% for web in webrooms %}
-      <li>
-          <p><b>Name:</b> {{ web.webinarId }}</p>
-          <p><b>ID:</b> {{ web.roomid }}</p>
-          <p><b>Create:</b> {{ web.create|date:"d.m.Y, H:i" }} </p>
-          <p><b>Result:</b> {{ web.result_upload }} </p>
-          <p><a href="{{ web.get_absolute_url }}">Detail</a> </p>
+              {% for web in webrooms %}
+              <li>
+                  <p><b>Name:</b> {{ web.webinarId }}</p>
+                  <p><b>ID:</b> {{ web.roomid }}</p>
+                  <p><b>Create:</b> {{ web.create|date:"d.m.Y, H:i" }} </p>
+                  <p><b>Result:</b> {{ web.result_upload }} </p>
+                  <p><a href="{{ web.get_absolute_url }}">Detail</a> </p>
 
-      </li>
-      {% endfor %}
+              </li>
+              {% endfor %}
 
-    </ul>
+            </ul>
+        {% endif %}
     {% else %}
       <p>There are no webroom in the library.</p>
     {% endif %}

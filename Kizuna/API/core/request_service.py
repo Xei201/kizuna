@@ -165,37 +165,8 @@ class RequestGetcorse(RequestImport):
         token_getcourse = self._get_token_getcourse()
         success = 0
         for viewer in viewers_list:
-            user = {
-                "user": {
-                    "email": viewer["email"],
-                    "phone": viewer["phone"],
-                    "addfields": {"Время на вебинаре (минуты)": viewer["view"],
-                                  "Клики на кнопки": viewer["buttons"],
-                                  "Клики на баннеры": viewer["banners"],
-                                  },
-                    "group_name": [webinar_id]},
-                "system": {
-                    "refresh_if_exists": 1}}
-            params = json.dumps(user).encode('utf-8')
-            encoded_params = base64.b64encode(params)
-            data = {
-                'action': 'add',
-                'key': token_getcourse,
-                'params': encoded_params
-            }
-            url = path.join(self._get_url_getcourse_api(), settings.URL_GETCOURSE_API_USERS)
-            try:
-                r = requests.post(url, data=data)
-                if r.json()["result"]["success"]:
-                    ViewersImport.objects.filter(id=viewer["id"]).update(import_to_gk=True)
-                    success += 1
-                else:
-                    logger.info(f"Unsuccess import to Getcourse user {viewer['email']}"
-                                f"from webinar {webinar_id}, error massage:"
-                                f"{r.json()['result']['error_message']}")
-            except ConnectionError:
-                logger.warning(f"Unsuccess import to Getcourse user {viewer['email']} "
-                            f"from webinar {webinar_id}")
+            if self._import_viever(viewer, webinar_id, token_getcourse):
+                success +=1
 
         if len(viewers_list) > 0:
             if round(success / len(viewers_list), 2) > settings.IMPORT_SUCCESS_RATE:
@@ -211,8 +182,45 @@ class RequestGetcorse(RequestImport):
             logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id} viewers = 0")
             return True
 
+    def _import_viever(self, viewer: str, webinar_id: str, token_getcourse: str) -> bool:
+        """Производит импорт одного зрителя на Getcourse"""
+
+        user = {
+            "user": {
+                "email": viewer["email"],
+                "phone": viewer["phone"],
+                "addfields": {"Время на вебинаре (минуты)": viewer["view"],
+                              "Клики на кнопки": viewer["buttons"],
+                              "Клики на баннеры": viewer["banners"],
+                              },
+                "group_name": [webinar_id]},
+            "system": {
+                "refresh_if_exists": 1}}
+        params = json.dumps(user).encode('utf-8')
+        encoded_params = base64.b64encode(params)
+        data = {
+            'action': 'add',
+            'key': token_getcourse,
+            'params': encoded_params
+        }
+        url = path.join(self._get_url_getcourse_api(), settings.URL_GETCOURSE_API_USERS)
+        try:
+            r = requests.post(url, data=data)
+            if r.json()["result"]["success"]:
+                ViewersImport.objects.filter(id=viewer["id"]).update(import_to_gk=True)
+                return True
+            else:
+                logger.info(f"Unsuccess import to Getcourse user {viewer['email']}"
+                            f"from webinar {webinar_id}, error massage:"
+                            f"{r.json()['result']['error_message']}")
+                return False
+        except ConnectionError:
+            logger.warning(f"Unsuccess import to Getcourse user {viewer['email']} "
+                           f"from webinar {webinar_id}")
+            return False
+
     @classmethod
-    def test_token_gk(cls, token, name_gk):
+    def test_token_gk(cls, token: str, name_gk: str) -> bool:
         """Проверка токена на актуальность"""
 
         data = {

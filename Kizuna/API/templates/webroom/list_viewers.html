@@ -5,17 +5,21 @@
     <h1>Viewers List</h1>
 
     {% if list_viewers %}
-    <ul>
+        {% if list_viewers.0 == 'Error' %}
+            <h2>{ list.1 }</h2>
+        {% else %}
+            <ul>
 
-      {% for viewer in list_viewers %}
-      <li>
-          <p><b>Email:</b> {{ viewer.email }}</p>
-          <p><b>Phone:</b> {{ viewer.phone }}</p>
-          <p><b>View:</b> {{ viewer.view }} Min</p>
-      </li>
-      {% endfor %}
+              {% for viewer in list_viewers %}
+              <li>
+                  <p><b>Email:</b> {{ viewer.email }}</p>
+                  <p><b>Phone:</b> {{ viewer.phone }}</p>
+                  <p><b>View:</b> {{ viewer.view }} Min</p>
+              </li>
+              {% endfor %}
 
-    </ul>
+            </ul>
+        {% endif %}
     {% else %}
       <p>There are no list viewers in the Webinar.</p>
     {% endif %}
