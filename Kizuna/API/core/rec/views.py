@@ -1,5 +1,5 @@
 from urllib.parse import urlencode
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.encoding import force_str
 from django.views import generic
 from django.views.generic.edit import UpdateView, DeleteView, FormView
@@ -44,12 +44,16 @@ class WebroomList(PermissionRequiredMixin, generic.ListView):
 
 
 class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
-    """Даныые по конкретному импорту пользователей"""
+    """Даныые по конкретному импорту вебинара"""
 
-    model = WebroomTransaction
+    object = WebroomTransaction
     template_name = "webroom/detail_webroom.html"
     context_object_name = "webroom"
     permission_required = ("catalog.can_request", )
+    # queryset = WebroomTransaction.objects.filter(live=True)
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(WebroomTransaction, pk=(self.kwargs.get('pk')+1))
 
 
 class ImportViewersListView(PermissionRequiredMixin, generic.ListView):

@@ -162,16 +162,15 @@ class RequestGetcorse(RequestImport):
 
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         viewers_list = webroom.viewersimport_set.values()
-        token_getcourse = self._get_token_getcourse()
         success = 0
         for viewer in viewers_list:
-            if self._import_viever(viewer, webinar_id, token_getcourse):
-                success +=1
+            if self.import_viever(viewer, webinar_id):
+                success += 1
 
         if len(viewers_list) > 0:
             if round(success / len(viewers_list), 2) > settings.IMPORT_SUCCESS_RATE:
                 webroom.result_upload = True
-                webroom.save()
+                webroom.save(update_fields=('result_upload',))
                 logger.info(f"Success import to Getcourse from webinar {webinar_id}")
                 return True
             else:
@@ -182,8 +181,13 @@ class RequestGetcorse(RequestImport):
             logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id} viewers = 0")
             return True
 
-    def _import_viever(self, viewer: str, webinar_id: str, token_getcourse: str) -> bool:
+    def import_viever(self, viewer: str, webinar_id: str) -> bool:
         """Производит импорт одного зрителя на Getcourse"""
+        token_getcourse = self._get_token_getcourse()
+
+        # Start for test VIEW
+        if token_getcourse == settings.GETCOURSE_TEST_API:
+            return True
 
         user = {
             "user": {

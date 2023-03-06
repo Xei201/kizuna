@@ -140,11 +140,15 @@ URL_BIZON_API = 'https://online.bizon365.ru/api/v1'
 URL_BIZON_WEBINAR = 'webinars/reports'
 
 # Url API service getcourse for import
-URL_GETCOURSE_API = ".getcourse.ru/pl/api"
-URL_GETCOURSE_API_USERS = "users"
+URL_GETCOURSE_API = '.getcourse.ru/pl/api'
+URL_GETCOURSE_API_USERS = 'users'
 
 # Min rate success import viewers to Getcourse
 IMPORT_SUCCESS_RATE = 0.8
+
+# Test data API for TestCases
+GETCOURSE_TEST_API = 'test_api_config_from_gk'
+BIZON_TEST_API = 'test_api_config_from_bizon'
 
 LOGGING = {
     'version': 1,

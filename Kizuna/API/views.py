@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from rest_framework import generics, status
 from urllib.parse import urlencode
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.encoding import force_str
 from django.views import generic
 from django.views.generic.edit import UpdateView, DeleteView, FormView
@@ -32,8 +32,7 @@ class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
     """API отвечающая за импорт людей из Bizon в Getcourse"""
     model = WebroomTransaction
     serializer_class = WebroomSerializer
-    #permission_classes = (SuccessToken, )
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (SuccessToken, )
 
     def perform_create(self, serializer):
         user_id = TokenImport.objects.get(token=self.request.GET.get('token')).user
@@ -61,8 +60,8 @@ class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@base_exception
-@permission_required("catalog.can_request")
+# @base_exception
+@permission_required("API.can_request")
 def index(request):
     """Представление выводящее общие данные статистики"""
 
@@ -81,9 +80,9 @@ class WebroomList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
     context_object_name = "webrooms"
     template_name = 'webroom/list_webroom.html'
     paginate_by = 10
-    permission_required = ("catalog.can_request", )
+    permission_required = ("API.can_request",)
 
-    def get_queryset(self):
+    def get_object(self):
         user_id = self.request.user
         return WebroomTransaction.objects.filter(user_id=user_id).order_by('create')
 
@@ -91,10 +90,12 @@ class WebroomList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
 class WebroomDetail(BaseExceptions, PermissionRequiredMixin, generic.DetailView):
     """Данные по конкретному импорту пользователей"""
 
-    model = WebroomTransaction
     template_name = "webroom/detail_webroom.html"
     context_object_name = "webroom"
-    permission_required = ("catalog.can_request", )
+    permission_required = ("API.can_request",)
+
+    def get_object(self):
+        return get_object_or_404(WebroomTransaction, pk=self.kwargs.get('pk'))
 
 
 class ImportViewersListView(BaseExceptions, PermissionRequiredMixin, generic.ListView):
@@ -104,20 +105,19 @@ class ImportViewersListView(BaseExceptions, PermissionRequiredMixin, generic.Lis
     model = ViewersImport
     template_name = 'webroom/list_viewers.html'
     context_object_name = "list_viewers"
-    permission_required = ("catalog.can_request",)
+    permission_required = ("API.can_request",)
     paginate_by = 20
 
     def get_queryset(self):
         webinarId = self._get_webinar_id()
         if self._import_gk(webinarId):
-            webroom_id = WebroomTransaction.objects.get(webinarId=webinarId).id
-            return ViewersImport.objects.filter(webroom_id=webroom_id)
+            return ViewersImport.objects.filter(webroom_id=self.kwargs.get('pk'))
         else:
             dict_error = ["Error", "Connection Error, try later"]
             return dict_error
 
     def _get_webinar_id(self):
-        return WebroomTransaction.objects.get(id=self.kwargs.get('pk')).webinarId
+        return get_object_or_404(WebroomTransaction, pk=self.kwargs.get('pk')).webinarId
 
     def _import_gk(self, webinarId: str) -> bool:
         imp = RequestGetcorse(self.request)
@@ -131,21 +131,19 @@ class ExportViewersCSV(BaseExceptions, PermissionRequiredMixin, ExportCSV):
     field_names = ["name", "email", "phone", "view", "buttons", "banners", "create"]
     add_col_names = True
     col_names = ["Имя", "Почта", "Телефон", "Время", "Кнопки", "Баннеры", "Создан"]
-    permission_required = ("catalog.can_request",)
+    permission_required = ("API.can_request",)
 
     def get_queryset(self):
         user = self.request.user
-        print(self.kwargs)
-        pk = self.kwargs.get('pk')
-        webroom = WebroomTransaction.objects.get(pk=pk)
-        if WebroomTransaction.objects.get(pk=pk).user_id != user:
+        webroom = get_object_or_404(WebroomTransaction, pk=self.kwargs.get('pk'))
+        if webroom.user_id != user:
             exception_msg = "No permission"
             logger.warning(f"{user} The user tried to download the "
                            f"CSV file of someone else's webinar {pk}")
             raise NoCorrectPermission(_(exception_msg))
         queryset = webroom.viewersimport_set.all()
         if queryset.exists():
-            return queryset
+            return webroom.viewersimport_set.iterator()
         else:
             logger.warning(f"{user} no find model to get queryset from CSV")
             exception_msg = "No model to get queryset from. Either provide " \
@@ -158,7 +156,7 @@ class ExportViewersCSV(BaseExceptions, PermissionRequiredMixin, ExportCSV):
             return self.filename
         if self.model is not None:
             pk = self.kwargs.get('pk')
-            model_name = WebroomTransaction.objects.get(pk=pk).__str__().lower()
+            model_name = get_object_or_404(WebroomTransaction, pk=pk).__str__().lower()
             self.filename = force_str(model_name + '_list.csv')
         else:
             logger.warning(f"No find model to generate filename from CSV")
@@ -177,7 +175,7 @@ class HandImportView(BaseExceptions, PermissionRequiredMixin, FormView):
 
     template_name = 'webroom/get_webroom.html'
     form_class = QuantityWebroom
-    permission_required = ("catalog.can_request",)
+    permission_required = ("API.can_request",)
 
     def form_valid(self, form):
         self.form = form
@@ -202,7 +200,7 @@ class ExportWebroomListView(BaseExceptions, PermissionRequiredMixin, generic.Lis
     model = None
     template_name = 'webroom/response_webroom.html'
     context_object_name = "list_webinar"
-    permission_required = ("catalog.can_request",)
+    permission_required = ("API.can_request",)
     paginate_by = 10
 
     def get_queryset(self):
@@ -238,7 +236,7 @@ class SettingsUpdateView(BaseExceptions, PermissionRequiredMixin, UpdateView):
 
     model = TokenImport
     form_class = SettingForm
-    permission_required = ("catalog.can_request",)
+    permission_required = ("API.can_request",)
     template_name = "setting/setting_form.html"
     success_url = reverse_lazy("setting")
 
@@ -252,7 +250,7 @@ class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, DeleteView):
 
     model = TokenImport
     fields = ["token_gk", "name_gk", "token_bizon"]
-    permission_required = ("catalog.can_request",)
+    permission_required = ("API.can_request",)
     template_name = "setting/setting_delay.html"
     context_object_name = "user_token"
 
