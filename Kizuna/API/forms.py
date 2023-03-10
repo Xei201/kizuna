@@ -33,7 +33,7 @@ class QuantityWebroom(forms.Form):
 
 
 class SettingForm(ModelForm):
-    """Форма внесение токенов внешний сервисов с проверкой их валидности"""
+    """Форма внесение токенов внешних сервисов с проверкой их валидности"""
 
     class Meta:
         model = TokenImport
@@ -41,6 +41,7 @@ class SettingForm(ModelForm):
 
     def clean_name_gk(self):
         """Проверка валидности имени акканта Getcourse"""
+
         name_gk = self.cleaned_data["name_gk"]
         self.name_gk = name_gk
         if len(name_gk) < 3:

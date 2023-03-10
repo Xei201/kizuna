@@ -1,8 +1,11 @@
 import base64
+import datetime
 import json
 import logging
 import requests
 from os import path
+
+from requests import JSONDecodeError
 
 from Kizuna import settings
 from API.models import WebroomTransaction, ViewersImport, TokenImport
@@ -53,15 +56,19 @@ class RequestBizon(RequestImport):
     def export_viwers(self, webinar_id: str) -> bool:
         """Загрузка списка зрителей в БД"""
 
-        dict_viewers = self.get_viewers(webinar_id)
-        if dict_viewers is None:
+        list_viewers = self.get_viewers(webinar_id)
+
+        if list_viewers is None:
             logger.warning(f"Error export viewers Bizon for web {webinar_id},"
                            f"from request {self.request}")
             return False
 
+        if list_viewers[0] == "It is test data":
+            return True
+
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         webroomm_transaction_id = webroom.id
-        for user in dict_viewers:
+        for user in list_viewers:
             if not (ViewersImport.objects.filter(webroom_id=webroomm_transaction_id) &
                     ViewersImport.objects.filter(email=user["email"])).exists():
                 viewer = ViewersImport()
@@ -76,40 +83,58 @@ class RequestBizon(RequestImport):
         logger.info(f"Success export viewers {webinar_id} from Bizon to BD")
         return True
 
-    def get_web_list(self, webroom_quantity: int) -> dict:
+    def get_web_list(self, webroom_quantity: int) -> list:
         """Получение списка вебинаров"""
 
         headers = self._get_headers()
-        date_min = self.request.GET.get("date_min")
-        date_max = self.request.GET.get("date_max")
+        date_min, date_max = self._get_date()
+
+        if date_min > date_max:
+            logger.warning(f"Uncorrect date of request {self.request}")
+            list_webroom = ["Error", "Uncorrect date, end date must be "
+                                     "greater than start date "]
+            return list_webroom
+
+        if headers["X-Token"] == settings.BIZON_TEST_API:
+            list_webroom = self._get_test_data_webroom()
+            return list_webroom
+
         params = {
             "skip": 0,
             "limit": webroom_quantity,
             "minDate": date_min,
             "maxDate": date_max}
+
         url = path.join(settings.URL_BIZON_API, settings.URL_BIZON_WEBINAR, 'getlist')
         try:
             response = requests.get(url, headers=headers, params=params)
         except ConnectionError:
             logger.warning(f"Connection Error from request {self.request}")
-            dict_webroom = ["Error", "Connection Error to List Web, try later"]
-            return dict_webroom
+            list_webroom = ["Error", "Connection Error to List Web, try later"]
+            return list_webroom
 
         if response.status_code == 200:
-            dict_webroom = response.json()
+            list_webroom = response.json()
             logger.info(f"Success web list from Bizon to view "
                         f"from request {self.request}")
-            return dict_webroom["list"]
+            return list_webroom["list"]
         else:
             logger.info(f"Response web list from request {self.request}"
                            f"web list return code {response.status_code}")
-            dict_webroom = ["Error", "Connection Error to List Web, try later"]
-            return dict_webroom
+            list_webroom = ["Error", "Connection Error to List Web, try later"]
+            return list_webroom
 
-    def get_viewers(self, webinar_id: str) -> dict:
+    def get_viewers(self, webinar_id: str) -> list:
         """Получение списка зрителей конкретного вебинара"""
 
         headers = self._get_headers()
+
+        # Обработка тестового запроса
+        if headers["X-Token"] == settings.BIZON_TEST_API:
+            list_users = []
+            list_users.append("It is test data")
+            return list_users
+
         params = {
             "webinarId": webinar_id,
             "skip": 0,
@@ -123,10 +148,10 @@ class RequestBizon(RequestImport):
             return None
 
         if response.status_code == 200:
-            dict_users = response.json()
+            list_users = response.json()
             logger.info(f"Success viewers list from Bizon to view"
                         f"from request {self.request}")
-            return dict_users["viewers"]
+            return list_users["viewers"]
         else:
             logger.warning(f"Response from request {self.request}"
                            f"viewers list return code {response.status_code}")
@@ -138,9 +163,28 @@ class RequestBizon(RequestImport):
         token = self._get_token_bizon()
         return {"X-Token": token}
 
+    def _get_date(self) -> tuple:
+        """Загрузка дат интервала запроса по выборке"""
+
+        date_min = self.request.GET.get("date_min", "")
+        date_max = self.request.GET.get("date_max", "")
+
+        return date_min, date_max
+
+    def _get_test_data_webroom(self) -> dict:
+        """Получает список тестовых вебинаров из БД
+        в обход базовой работы класса с внешним ресурсом"""
+
+        user = TokenImport.objects.get(token_bizon=settings.BIZON_TEST_API).user
+        dict_webroom = WebroomTransaction.objects.filter(user_id=user)
+        return dict_webroom
+
     @classmethod
     def test_token_bizon(cls, token: str) -> bool:
         """Проверка токена на актуальность"""
+
+        if token == settings.BIZON_TEST_API:
+            return True
 
         headers = {"X-Token": token}
         params = {"limit": 1}
@@ -227,6 +271,9 @@ class RequestGetcorse(RequestImport):
     def test_token_gk(cls, token: str, name_gk: str) -> bool:
         """Проверка токена на актуальность"""
 
+        if token == settings.GETCOURSE_TEST_API:
+            return True
+
         data = {
             'action': 'add',
             'key': token,
@@ -241,3 +288,10 @@ class RequestGetcorse(RequestImport):
         except ConnectionError:
             logger.info(f"Unsuccess test token Getcourse {name_gk}")
             return False
+        except JSONDecodeError:
+            logger.info(f"Unsuccess test token Getcourse {name_gk}")
+            return False
+
+
+
+

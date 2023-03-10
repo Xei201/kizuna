@@ -10,7 +10,7 @@ from django.utils.encoding import force_str
 from django.views import generic
 from django.views.generic.edit import UpdateView, DeleteView, FormView
 from django.urls import reverse, reverse_lazy
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import IsAuthenticated
@@ -61,7 +61,8 @@ class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
 
 
 # @base_exception
-@permission_required("API.can_request")
+@login_required
+@permission_required("API.can_request", raise_exception=True)
 def index(request):
     """Представление выводящее общие данные статистики"""
 
@@ -82,7 +83,7 @@ class WebroomList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
     paginate_by = 10
     permission_required = ("API.can_request",)
 
-    def get_object(self):
+    def get_queryset(self):
         user_id = self.request.user
         return WebroomTransaction.objects.filter(user_id=user_id).order_by('create')
 
@@ -111,7 +112,8 @@ class ImportViewersListView(BaseExceptions, PermissionRequiredMixin, generic.Lis
     def get_queryset(self):
         webinarId = self._get_webinar_id()
         if self._import_gk(webinarId):
-            return ViewersImport.objects.filter(webroom_id=self.kwargs.get('pk'))
+            pk = WebroomTransaction.objects.get(webinarId=webinarId).id
+            return ViewersImport.objects.filter(webroom=pk)
         else:
             dict_error = ["Error", "Connection Error, try later"]
             return dict_error
@@ -139,7 +141,7 @@ class ExportViewersCSV(BaseExceptions, PermissionRequiredMixin, ExportCSV):
         if webroom.user_id != user:
             exception_msg = "No permission"
             logger.warning(f"{user} The user tried to download the "
-                           f"CSV file of someone else's webinar {pk}")
+                           f"CSV file of someone else's webinar {self.kwargs.get('pk')}")
             raise NoCorrectPermission(_(exception_msg))
         queryset = webroom.viewersimport_set.all()
         if queryset.exists():
@@ -189,6 +191,7 @@ class HandImportView(BaseExceptions, PermissionRequiredMixin, FormView):
 
     def get_initial(self):
         initial = super().get_initial()
+        initial["quantity_webroom"] = 1
         initial["date_min"] = datetime.date.today() - datetime.timedelta(weeks=4)
         initial["date_max"] = datetime.date.today()
         return initial
@@ -204,7 +207,7 @@ class ExportWebroomListView(BaseExceptions, PermissionRequiredMixin, generic.Lis
     paginate_by = 10
 
     def get_queryset(self):
-        webroom_quantity = abs(int(self.kwargs.get("wq")))
+        webroom_quantity = int(self.kwargs.get("wq"))
         export = RequestBizon(self.request)
         list_webinar = export.get_web_list(webroom_quantity)
         return list_webinar
