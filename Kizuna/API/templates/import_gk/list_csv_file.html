@@ -1,0 +1,29 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>File CSV List</h1>
+    <p><a href="{% url 'import-getcourse' %}">Load new file</a> </p>
+
+    {% if files %}
+        {% if files.0 == 'Error' %}
+            <h2>{ files.1 }</h2>
+        {% else %}
+            <ul>
+
+              {% for file in files %}
+              <li>
+                  <p><b>Name:</b> {{ file }}</p>
+                  <p><b>Group:</b> {{ file.group_user }}</p>
+                  <p><b>Load:</b> {{ file.date_load|date:"d.m.Y, H:i" }} </p>
+                  <p><a href="{{ file.get_import_url }}">Reimport</a> </p>
+
+              </li>
+              {% endfor %}
+
+            </ul>
+        {% endif %}
+    {% else %}
+      <p>There are no File in the library.</p>
+    {% endif %}
+{% endblock %}

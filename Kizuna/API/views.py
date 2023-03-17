@@ -1,27 +1,26 @@
 import logging
 import datetime
 
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.views.generic import TemplateView
 from rest_framework import generics, status
 from urllib.parse import urlencode
 from django.shortcuts import render, get_object_or_404
 from django.utils.encoding import force_str
 from django.views import generic
-from django.views.generic.edit import UpdateView, DeleteView, FormView
+from django.views.generic.edit import UpdateView, FormView
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .core.exception import BaseExceptions, base_exception
-from .core.exceptions import NoModelFoundException, NoCorrectPermission, NoCorrectPermission
+from .core.exceptions import NoModelFoundException, NoCorrectPermission
 from .core.export_csv import ExportCSV
-from .forms import QuantityWebroom, SettingForm
+from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK
+from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm
 from .core.request_service import RequestBizon, RequestGetcorse
-from .models import WebroomTransaction, ViewersImport, TokenImport
+from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse
 from .core.serializers import WebroomSerializer
 from .core.permissions import SuccessToken
 
@@ -30,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
     """API отвечающая за импорт людей из Bizon в Getcourse"""
+
     model = WebroomTransaction
     serializer_class = WebroomSerializer
     permission_classes = (SuccessToken, )
@@ -44,16 +44,11 @@ class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        webinar_id = serializer.data["webinarId"]
+        webroom = serializer.data["webinarId"]
         export = RequestBizon(self.request)
-        if export.export_viwers(webinar_id):
-            imp = RequestGetcorse(self.request)
-            if imp.import_viewers(webinar_id):
-                logger.info(f"Success API import to Getcourse viewers from API to Bizon "
-                            f"request {self.request}")
-            else:
-                logger.warning(f"Fallen API import to Getcourse viewers from API to Bizon "
-                               f"request {self.request}")
+        if export.export_viwers(webroom):
+            imp = ImportGetcorseValidation(self.request)
+            imp.start_import_to_getcourse_api(webroom)
         else:
             logger.warning(f"Fallen API import to Getcourse viewers from API to Bizon "
                         f"request {self.request}")
@@ -248,7 +243,7 @@ class SettingsUpdateView(BaseExceptions, PermissionRequiredMixin, UpdateView):
         return TokenImport.objects.get(user=self.request.user)
 
 
-class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, DeleteView):
+class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, generic.DetailView):
     """Представление токенов юзера"""
 
     model = TokenImport
@@ -262,12 +257,93 @@ class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, DeleteView):
         return TokenImport.objects.get(user=self.request.user)
 
 
-def tests(request):
-    try:
-        token = request.GET.get("token")
-        data = TokenImport.objects.filter(token=token).exists()
-    except ValidationError:
-        data = False
-    return HttpResponse(data)
+class DownloadedFileImportGetcourse(BaseExceptions, PermissionRequiredMixin, generic.CreateView):
+    """Форма загрузки CSV для импорта пользователей на Getcourse"""
+
+    permission_required = ("API.can_request",)
+    template_name = 'import_gk/downloaded_file.html'
+    form_class = DownLoadedFileForm
+    success_url = reverse_lazy('correct-field-getcourse')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+
+class CorrectFileFieldImportGetcourse(BaseExceptions, PermissionRequiredMixin, FormView):
+    """Пользователь выбирает соотношение полей в последнем загруженном CSV файле и полей модели импорта"""
+
+    permission_required = ("API.can_request",)
+    template_name = 'import_gk/correct_field_params.html'
+    form_class = CorrectFieldsForm
+    success_url = reverse_lazy('success-import-getcourse')
+    import_validation_class = ImportGetcorseValidation
+
+    def get(self, request, *args, **kwargs):
+        """Добавление в форму параметров choices из файла CSV"""
+
+        context_data = self.get_context_data()
+        self.get_coices_for_form(request, context_data["form"], **kwargs)
+        return self.render_to_response(context_data)
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        self.get_coices_for_form(request, form, **kwargs)
+        if form.is_valid():
+            field_position_dict = form.cleaned_data
+            user = request.user
+            webroom = FileImportGetcourse.objects.filter(user=user).last().group_user
+            imp = self.get_import_validation_class(request=request, **kwargs)
+            if imp.start_upload_viewers_csv_to_bd(field_position_dict):
+                imp.start_import_to_getcorse_csv(webroom)
+                return self.form_valid(form)
+
+        return self.form_invalid(form)
+
+    def get_coices_for_form(self, request, form, **kwargs):
+        imp = self.get_import_validation_class(request, **kwargs)
+        list_choices_tuple = imp.get_choices_field()
+        form.fields['email'].choices = list_choices_tuple
+        form.fields['name'].choices = list_choices_tuple
+        form.fields['phone'].choices = list_choices_tuple
+
+    def get_import_validation_class(self, request, **kwargs):
+        """Return the import validation class to use."""
+        return self.import_validation_class(request, **kwargs)
+
+
+class SuccessImportGetcourse(BaseExceptions, PermissionRequiredMixin, TemplateView):
+    """Страница после завершения импорта на Getcourse"""
+
+    permission_required = ("API.can_request",)
+    template_name = 'import_gk/success_import.html'
+
+
+class CSVFileImportList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
+    """Список файлов CSV импортированных юзером"""
+
+    model = WebroomTransaction
+    context_object_name = "files"
+    template_name = 'import_gk/list_csv_file.html'
+    paginate_by = 10
+    permission_required = ("API.can_request",)
+
+    def get_queryset(self):
+        user_id = self.request.user
+        return FileImportGetcourse.objects.filter(user_id=user_id)
+
+
+class ReimportFileGetcorse(CorrectFileFieldImportGetcourse):
+    """Пользователь выбирает соотношение полей в выбранном CSV файле и полей модели импорта"""
+
+    import_validation_class = ImportGetcourseValidationPK
+
+
+
+
+
+
+
+
 
 

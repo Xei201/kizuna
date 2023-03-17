@@ -6,7 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
 
-from API.models import TokenImport
+from API.models import TokenImport, FileImportGetcourse
 from API.core.request_service import RequestBizon, RequestGetcorse
 
 
@@ -76,3 +76,28 @@ class SettingForm(ModelForm):
 
     def _valid_value(self, name: str) -> bool:
         return re.fullmatch(r'[0-9a-zA-Z_-]+', name) is None
+
+
+class DownLoadedFileForm(ModelForm):
+    """Отвечает за загрузку CSV файла с контактами студентов"""
+
+    class Meta:
+        model = FileImportGetcourse
+        fields = ("file", "group_user")
+
+    def clean_file(self):
+        file_name = self.cleaned_data["file"].name
+        if not file_name.endswith(".csv"):
+            raise ValidationError(_("Тип файла должен быть CSV"))
+
+        return self.cleaned_data["file"]
+
+
+class CorrectFieldsForm(forms.Form):
+    """Форма уточнения выборки столбивков файла CSV для имяпорта в GC"""
+    email = forms.ChoiceField()
+    name = forms.ChoiceField()
+    phone = forms.ChoiceField()
+
+
+

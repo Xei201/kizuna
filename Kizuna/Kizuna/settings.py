@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "API.middleware.RequestTimeControl",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -162,6 +164,9 @@ LOGGING = {
         },
         'file-info': {
             'format': '%(name)s %(levelname)s %(asctime)s %(funcName)s %(module)s %(message)s'
+        },
+        'file-request-time': {
+            'format': '%(levelname)s %(asctime)s %(message)s'
         }
     },
     'handlers': {
@@ -181,12 +186,22 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'formatter': 'file-info',
             'filename': 'info-core.log'
+        },
+        'info-request': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'file-request-time',
+            'filename': 'info-time-request.log'
         }
     },
     'loggers': {
         'API': {
             'level': 'DEBUG',
             'handlers': ['console', 'core-file', 'info-core']
+        },
+        'time_request_control': {
+            'level': 'INFO',
+            'handlers': ['info-request']
         }
     }
 }

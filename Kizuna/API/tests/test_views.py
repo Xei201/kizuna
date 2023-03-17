@@ -624,6 +624,40 @@ class HandImportViewersListTest(TestCase):
         self.assertEqual(resp.context['list_viewers'][0].name, name_viewer)
         self.assertEqual(resp.context['list_viewers'][0].email, email_viewer)
 
+    class ImportGetcourseTest(TestCase):
+        """Test view CSVFileImportList"""
+
+        def setUp(self) -> None:
+            # Создание тестовых пользователей
+            user1 = User.objects.create_user(username="test1", password="12345")
+            user1.save()
+            user2 = User.objects.create_user(username="test2", password="12345")
+            user2.save()
+            # Выдача тестовому пользователю прав доступа и тестовых токенов
+            permission = Permission.objects.get(name='Has request to GK, Bizon')
+            user2.user_permissions.add(permission)
+            user2.save()
+            TokenImport.objects.create(
+                user=user2,
+                token_gk=settings.GETCOURSE_TEST_API,
+                token_bizon=settings.BIZON_TEST_API,
+                name_gk="test")
+
+    def test_redirect_if_user_has_no_corrected_permission_csf_file(self):
+        Login = self.client.login(username="test1", password="12345")
+        resp = self.client.get(reverse('my-import-getcourse'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_open_sours_if_user_has_permission_csf_file(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('my-import-getcourse'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_template_csf_file(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('my-import-getcourse'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "import_gk/downloaded_file.html")
 
 
 

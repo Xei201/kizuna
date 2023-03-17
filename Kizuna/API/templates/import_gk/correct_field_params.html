@@ -1,0 +1,15 @@
+{% extends "base_general_template.html" %}
+
+{% block content %}
+  <h1>Параметры: {{ import_file.str }}</h1>
+
+
+<form action="" method="post">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="Submit" />
+
+</form>
+{% endblock %}

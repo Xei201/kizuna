@@ -1,3 +1,5 @@
+import os.path
+
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
@@ -108,6 +110,26 @@ class ViewersImport(models.Model):
     def __str__(self):
         return self.email
 
+
+class FileImportGetcourse(models.Model):
+    file = models.FileField(upload_to='load_file_import/')
+    date_load = models.DateTimeField(auto_now_add=True)
+    group_user = models.CharField(max_length=200, default=None)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True
+    )
+
+    class Meta:
+        ordering = ["date_load"]
+
+    def __str__(self):
+        return os.path.basename(self.file.name)
+
+    def get_import_url(self):
+        return reverse('reimport-getcourse', args=[str(self.id)])
 
 
 

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import WebroomTransaction, TokenImport, ViewersImport
+from .models import WebroomTransaction, TokenImport, ViewersImport, FileImportGetcourse
 
 
 class ViewersInline(admin.TabularInline):
@@ -24,4 +24,9 @@ class ViewsAdmin(admin.ModelAdmin):
     list_display = ("email", "phone", "view", "create", "import_to_gk")
     list_filter = ("email", "phone", "view", "create", "import_to_gk")
 
+
+@admin.register(FileImportGetcourse)
+class ViewsAdmin(admin.ModelAdmin):
+    list_display = ("file", "user", "group_user", "date_load")
+    list_filter = ("date_load", )
 

@@ -1,11 +1,8 @@
 import base64
-import datetime
 import json
 import logging
 import requests
 from os import path
-
-from requests import JSONDecodeError
 
 from Kizuna import settings
 from API.models import WebroomTransaction, ViewersImport, TokenImport
@@ -43,8 +40,8 @@ class RequestImport():
         """Поиск юзера в системе либо через request либо через token"""
 
         params_user = {}
-        if self.request.GET.get("token", ""):
-            params_user["token"] = self.request.GET.get("token", "")
+        if self.request.GET.get("token"):
+            params_user["token"] = self.request.GET.get("token")
         else:
             params_user["user"] = self.request.user
         return params_user
@@ -58,7 +55,7 @@ class RequestBizon(RequestImport):
 
         list_viewers = self.get_viewers(webinar_id)
 
-        if list_viewers is None:
+        if list_viewers is None or len(list_viewers) == 0:
             logger.warning(f"Error export viewers Bizon for web {webinar_id},"
                            f"from request {self.request}")
             return False
@@ -219,13 +216,13 @@ class RequestGetcorse(RequestImport):
                 return True
             else:
                 logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id},"
-                            f"success rate < {settings.IMPORT_SUCCES_RATE}")
+                            f"success rate minimal")
                 return False
         else:
             logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id} viewers = 0")
             return True
 
-    def import_viever(self, viewer: str, webinar_id: str) -> bool:
+    def import_viever(self, viewer: dict, webinar_id: str) -> bool:
         """Производит импорт одного зрителя на Getcourse"""
         token_getcourse = self._get_token_getcourse()
 
@@ -288,7 +285,7 @@ class RequestGetcorse(RequestImport):
         except ConnectionError:
             logger.info(f"Unsuccess test token Getcourse {name_gk}")
             return False
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             logger.info(f"Unsuccess test token Getcourse {name_gk}")
             return False
 
