@@ -104,3 +104,27 @@ class ImportGetcourseValidationPK(ImportGetcorseValidation):
             exception_msg = "No found file"
             raise NoModelFoundException(_(exception_msg))
 
+
+class ConvertedTestCSV():
+    """Class convertet testing data in SCV to correct forms and return correct CSV"""
+
+    @staticmethod
+    def convert_data(file: str) -> list:
+        testing_data = ConvertedTestCSV.get_scv_data(file)
+        final_result = {}
+        ss = []
+        next(testing_data)
+        for row in testing_data:
+            if row[0] in final_result:
+                final_result[row[0]][2] = final_result[row[0]][2] + int(row[8])
+            else:
+                final_result[row[0]] = [row[2][1:-1], row[3], int(row[8])]
+        for i in final_result:
+            ss.append(final_result[i])
+        return ss
+
+
+    @staticmethod
+    def get_scv_data(file: str) -> list:
+        file_decoder = file.read().decode('utf-8')
+        return csv.reader(StringIO(file_decoder), delimiter=';', quotechar=',')

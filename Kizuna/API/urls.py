@@ -31,6 +31,10 @@ getcourse_import_patterns = [
     path('import/correct/success', views.SuccessImportGetcourse.as_view(), name="success-import-getcourse"),
 ]
 
+test_convert_patterns = [
+    path('', views.Test_upload_data_FormView.as_view(), name="upload_test"),
+]
+
 urlpatterns = [
     path('', views.index, name="index"),
     path('api/v1/', include(api_patterns)),
@@ -38,4 +42,5 @@ urlpatterns = [
     path('hand_import/', include(hand_import_patterns)),
     path('setting', include(setting_patterns)),
     path('import_getcourse/', include(getcourse_import_patterns)),
+    path('test_convert/', include(test_convert_patterns)),
 ]

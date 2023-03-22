@@ -8,9 +8,9 @@
 <form action="" method="post">
     {% csrf_token %}
     <table>
-    {{ form.as_table }}
+    {{ form.as_p }}
     </table>
-    <input type="submit" value="Проверить валидность токенов" />
+    <input type="submit" value="Проверить валидность токенов" class="mx-2"/>
 
 </form>
 {% endblock %}

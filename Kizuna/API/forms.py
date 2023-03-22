@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from API.models import TokenImport, FileImportGetcourse
 from API.core.request_service import RequestBizon, RequestGetcorse
+from Kizuna import settings
 
 
 class QuantityWebroom(forms.Form):
@@ -100,4 +101,12 @@ class CorrectFieldsForm(forms.Form):
     phone = forms.ChoiceField()
 
 
+class DownLoadedTestFileForm(forms.Form):
+    file = forms.FileField()
 
+    def clean_file(self):
+        file_name = self.cleaned_data["file"].name
+        if not file_name.endswith(".csv"):
+            raise ValidationError(_("Тип файла должен быть CSV"))
+
+        return self.cleaned_data["file"]

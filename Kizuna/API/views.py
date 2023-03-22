@@ -1,6 +1,9 @@
+import csv
 import logging
 import datetime
+import uuid
 
+from django.http import HttpResponse
 from django.views.generic import TemplateView
 from rest_framework import generics, status
 from urllib.parse import urlencode
@@ -17,8 +20,8 @@ from rest_framework.response import Response
 from .core.exception import BaseExceptions, base_exception
 from .core.exceptions import NoModelFoundException, NoCorrectPermission
 from .core.export_csv import ExportCSV
-from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK
-from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm
+from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK, ConvertedTestCSV
+from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm, DownLoadedTestFileForm
 from .core.request_service import RequestBizon, RequestGetcorse
 from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse
 from .core.serializers import WebroomSerializer
@@ -337,6 +340,35 @@ class ReimportFileGetcorse(CorrectFileFieldImportGetcourse):
     """Пользователь выбирает соотношение полей в выбранном CSV файле и полей модели импорта"""
 
     import_validation_class = ImportGetcourseValidationPK
+
+
+class Test_upload_data_FormView(BaseExceptions, PermissionRequiredMixin, FormView):
+    form_class = DownLoadedTestFileForm
+    template_name = 'test_convert/downloaded_test_file.html'
+    permission_required = ("API.can_request",)
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            file = form.cleaned_data['file']
+
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+                force_str(str(uuid.uuid4()) + '_list.csv'))
+
+            try:
+                wr = csv.writer(
+                    response,
+                    dialect='excel'
+                )
+            except TypeError:
+                raise TypeError()
+
+            converted_data = ConvertedTestCSV.convert_data(file)
+            wr.writerows(converted_data)
+            return response
+
+
 
 
 

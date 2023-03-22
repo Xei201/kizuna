@@ -2,8 +2,10 @@ import os.path
 
 from django.db import models
 from django.contrib.auth.models import User
-import uuid
 from django.urls import reverse
+import uuid
+
+from Kizuna import settings
 
 
 def get_default_field_token():
@@ -112,7 +114,7 @@ class ViewersImport(models.Model):
 
 
 class FileImportGetcourse(models.Model):
-    file = models.FileField(upload_to='load_file_import/')
+    file = models.FileField(upload_to=settings.DIRECTORY_FROM_FILE_IMPORT)
     date_load = models.DateTimeField(auto_now_add=True)
     group_user = models.CharField(max_length=200, default=None)
     user = models.ForeignKey(

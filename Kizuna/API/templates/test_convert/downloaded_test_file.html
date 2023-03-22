@@ -1,0 +1,19 @@
+{% extends "base_general_template.html" %}
+
+{% block content %}
+
+<h1>Конвертация данных выгрузки тестирования Getcourse</h1>
+
+<p>
+    Ниже Вам нужно загрузить файл в формате CSV.
+</p>
+
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <table>
+    {{ form.as_table }}
+    </table>
+    <input type="submit" value="Submit" />
+
+</form>
+{% endblock %}
