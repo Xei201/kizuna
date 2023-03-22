@@ -198,14 +198,17 @@ class RequestBizon(RequestImport):
 class RequestGetcorse(RequestImport):
     """Сервис импортирующий людей на Getcourse"""
 
-    def import_viewers(self, webinar_id: str) -> bool:
+    def import_viewers(self, webinar_id: str, group=None) -> bool:
         """Импорт списка пользователей на Getcourse"""
 
         webroom = WebroomTransaction.objects.get(webinarId=webinar_id)
         viewers_list = webroom.viewersimport_set.values()
         success = 0
+        if group:
+            group = webinar_id
+
         for viewer in viewers_list:
-            if self.import_viever(viewer, webinar_id):
+            if self.import_viever(viewer, group):
                 success += 1
 
         if len(viewers_list) > 0:

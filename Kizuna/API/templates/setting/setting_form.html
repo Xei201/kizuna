@@ -1,16 +1,18 @@
 {% extends "base_general_template.html" %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 
 <h1>Изменение настроек токенов</h1>
 <p>Введите ниже API token Getcourse, название Вашего Getcourse проекта
     и API token с платформы Bizon365</p>
-<form action="" method="post">
+<form action="" method="post" class="w-25 p-3">
     {% csrf_token %}
     <table>
-    {{ form.as_p }}
+    {{ form|crispy }}
     </table>
-    <input type="submit" value="Проверить валидность токенов" class="mx-2"/>
+    <input type="submit" value="Проверить валидность токенов" class="btn btn-success"/>
 
 </form>
 {% endblock %}

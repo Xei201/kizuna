@@ -295,10 +295,12 @@ class CorrectFileFieldImportGetcourse(BaseExceptions, PermissionRequiredMixin, F
         if form.is_valid():
             field_position_dict = form.cleaned_data
             user = request.user
-            webroom = FileImportGetcourse.objects.filter(user=user).last().group_user
+            file_data = FileImportGetcourse.objects.filter(user=user).last()
+            webroom = file_data.group_user + str(file_data.date_load)
+            group = file_data.group_user
             imp = self.get_import_validation_class(request=request, **kwargs)
             if imp.start_upload_viewers_csv_to_bd(field_position_dict):
-                imp.start_import_to_getcorse_csv(webroom)
+                imp.start_import_to_getcorse_csv(webroom, group=group)
                 return self.form_valid(form)
 
         return self.form_invalid(form)

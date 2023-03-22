@@ -38,9 +38,9 @@ class ImportGetcorseValidation():
             logger.warning(f"Fallen API import to Getcourse viewers from API to Bizon "
                            f"request {self.request}")
 
-    def start_import_to_getcorse_csv(self, webroom):
+    def start_import_to_getcorse_csv(self, webroom, group):
         imp = RequestGetcorse(self.request)
-        if imp.import_viewers(webroom):
+        if imp.import_viewers(webroom, group):
             logger.info(f"Success import to Getcourse viewers from CSV to Bizon "
                         f"request {self.request}")
         else:
@@ -53,7 +53,7 @@ class ImportGetcorseValidation():
         webroom = WebroomTransaction.objects.create(
             event="Import CSV",
             roomid=str(file),
-            webinarId=file.group_user,
+            webinarId=file.group_user + str(file.date_load),
             user_id=self.request.user
         )
         next(csv_data)
@@ -119,9 +119,8 @@ class ConvertedTestCSV():
                 final_result[row[0]][2] = final_result[row[0]][2] + int(row[8])
             else:
                 final_result[row[0]] = [row[2][1:-1], row[3], int(row[8])]
-        for i in final_result:
-            ss.append(final_result[i])
-        return ss
+
+        return list(final_result.values())
 
 
     @staticmethod

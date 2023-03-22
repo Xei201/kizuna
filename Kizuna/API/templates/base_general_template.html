@@ -5,7 +5,7 @@
   <title> {% block title %} Kizuna Project{% endblock %} </title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
@@ -21,21 +21,21 @@
     <div class="row">
       <div class="col-sm-2">
         {% block sidebar %}
-            <ul class="sidebar-nav">
-                <li><a href="{% url 'index' %}">Главная</a></li>
-                <li><a href="{% url 'my-webroom' %}">Импорт вебинаров</a></li>
-                <li><a href="{% url 'hand-import' %}">Ручной импорт вебинаров</a></li>
-                <li><a href="{% url 'my-import-getcourse' %}">Импорт пользователей на геткурс</a></li>
-                <li><a href="{% url 'upload_test' %}">Конвертация данных тестирований</a></li>
-                <li><a href="{% url 'setting-delay' %}">Настройки</a></li>
+            <ul class="list-group list-group-flush">
+                <a href="{% url 'index' %}" class="list-group-item list-group-item-action">Главная</a>
+                <a href="{% url 'my-webroom' %}"  class="list-group-item list-group-item-action">Импорт вебинаров</a>
+                <a href="{% url 'hand-import' %}"  class="list-group-item list-group-item-action">Ручной импорт вебинаров</a>
+                <a href="{% url 'my-import-getcourse' %}"  class="list-group-item list-group-item-action">Импорт пользователей на геткурс</a>
+                <a href="{% url 'upload_test' %}"  class="list-group-item list-group-item-action">Конвертация данных тестирований</a>
+                <a href="{% url 'setting-delay' %}"  class="list-group-item list-group-item-action">Настройки</a>
             </ul>
 
             <ul class="sidebar-nav">
                 {% if user.is_authenticated %}
-                    <li>User: {{ user.get_username }}</li>
-                    <li><a href="{% url 'logout'%}?next={{request.path}}">Logout</a></li>
+                    <li class="list-group-item">User: {{ user.get_username }}</li>
+                    <li><a href="{% url 'logout'%}?next={{request.path}}" class="list-group-item list-group-item-action active">Logout</a></li>
                     {% else %}
-                        <li><a href="{% url 'login'%}?next={{request.path}}">Login</a></li>
+                        <li><a href="{% url 'login'%}?next={{request.path}}" class="list-group-item list-group-item-action active">Login</a></li>
                     {% endif %}
             </ul>
 

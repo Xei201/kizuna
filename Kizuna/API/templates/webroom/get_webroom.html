@@ -1,5 +1,7 @@
 {% extends "base_general_template.html" %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 
 <h1>Ручной импорт данных из бизона</h1>
@@ -7,12 +9,12 @@
 <p>Укажите число вебинарных комнат для загрузки из Бизон365</p>
 <p>Если хотите получить список без ограничения то сделайте поля дат пустыми</p>
 
-<form action="" method="post">
+<form action="" method="post" class="w-25 p-3">
     {% csrf_token %}
     <table>
-    {{ form.as_table }}
+    {{ form|crispy }}
     </table>
-    <input type="submit" value="Submit" />
+    <input type="submit" value="Получить список" />
 
 </form>
 {% endblock %}

@@ -1,5 +1,7 @@
 {% extends "base_general_template.html" %}
 
+{% load crispy_forms_tags %}
+
 {% block content %}
 
 <h1>Конвертация данных выгрузки тестирования Getcourse</h1>
@@ -8,12 +10,12 @@
     Ниже Вам нужно загрузить файл в формате CSV.
 </p>
 
-<form action="" method="post" enctype="multipart/form-data">
+<form action="" method="post" enctype="multipart/form-data" class="w-25 p-3">
     {% csrf_token %}
     <table>
-    {{ form.as_table }}
+    {{ form|crispy }}
     </table>
-    <input type="submit" value="Submit" />
+    <input type="submit" value="Загрузить файл" />
 
 </form>
 {% endblock %}

@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'general.apps.GeneralConfig',
     'rest_framework',
     'debug_toolbar',
+    'crispy_forms',
+    'crispy_bootstrap4',
 ]
 
 MIDDLEWARE = [
@@ -153,6 +155,10 @@ IMPORT_SUCCESS_RATE = 0.8
 # Test data API for TestCases
 GETCOURSE_TEST_API = 'test_api_config_from_gk'
 BIZON_TEST_API = 'test_api_config_from_bizon'
+
+# Crispy forms version, using bootstrap
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 LOGGING = {
     'version': 1,

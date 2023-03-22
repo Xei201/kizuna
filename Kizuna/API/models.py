@@ -114,9 +114,12 @@ class ViewersImport(models.Model):
 
 
 class FileImportGetcourse(models.Model):
-    file = models.FileField(upload_to=settings.DIRECTORY_FROM_FILE_IMPORT)
+    file = models.FileField(upload_to=settings.DIRECTORY_FROM_FILE_IMPORT,
+                            verbose_name="файл")
     date_load = models.DateTimeField(auto_now_add=True)
-    group_user = models.CharField(max_length=200, default=None)
+    group_user = models.CharField(max_length=200,
+                                  default=None,
+                                  verbose_name="группа_пользователей")
     user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
