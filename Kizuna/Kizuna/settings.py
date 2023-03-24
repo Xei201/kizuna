@@ -187,19 +187,19 @@ LOGGING = {
             'level': 'WARNING',
             'class': 'logging.FileHandler',
             'formatter': 'file',
-            'filename': 'core-warning.log'
+            'filename': 'logs/core-warning.log'
         },
         'info-core': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'formatter': 'file-info',
-            'filename': 'info-core.log'
+            'filename': 'logs/info-core.log'
         },
         'info-request': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
             'formatter': 'file-request-time',
-            'filename': 'info-time-request.log'
+            'filename': 'logs/info-time-request.log'
         }
     },
     'loggers': {

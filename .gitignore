@@ -1,3 +1,11 @@
 /venv/
 /.idea/
 /Kizuna/deploy/
+/Kizuna/Kizuna/settings.ini
+/Kizuna/load_file_import/
+/Kizuna/logs/
+/Kizuna/API/migrations/
+/Kizuna/db.sqlite3
+/Kizuna/API/core/exampl.py
+/Kizuna/API/core/rec/
+/Kizuna/API/core/exception.py

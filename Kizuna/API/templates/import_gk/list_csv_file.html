@@ -2,8 +2,8 @@
 
 
 {% block content %}
-    <h1>File CSV List</h1>
-    <p><a href="{% url 'import-getcourse' %}">Load new file</a> </p>
+    <h1>Список файлов CSV</h1>
+    <p><a href="{% url 'import-getcourse' %}">Загрузить новый файл</a> </p>
 
     {% if files %}
         {% if files.0 == 'Error' %}

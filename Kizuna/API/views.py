@@ -17,7 +17,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from rest_framework.response import Response
 
-from .core.exception import BaseExceptions, base_exception
 from .core.exceptions import NoModelFoundException, NoCorrectPermission
 from .core.export_csv import ExportCSV
 from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK, ConvertedTestCSV
@@ -30,7 +29,7 @@ from .core.permissions import SuccessToken
 logger = logging.getLogger(__name__)
 
 
-class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
+class InitialImportAPIView(generics.CreateAPIView):
     """API отвечающая за импорт людей из Bizon в Getcourse"""
 
     model = WebroomTransaction
@@ -58,7 +57,6 @@ class InitialImportAPIView(BaseExceptions, generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# @base_exception
 @login_required
 @permission_required("API.can_request", raise_exception=True)
 def index(request):
@@ -72,7 +70,7 @@ def index(request):
     })
 
 
-class WebroomList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
+class WebroomList(PermissionRequiredMixin, generic.ListView):
     """Список вебинаров импортированных юзером"""
 
     model = WebroomTransaction
@@ -86,7 +84,7 @@ class WebroomList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
         return WebroomTransaction.objects.filter(user_id=user_id).order_by('create')
 
 
-class WebroomDetail(BaseExceptions, PermissionRequiredMixin, generic.DetailView):
+class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
     """Данные по конкретному импорту пользователей"""
 
     template_name = "webroom/detail_webroom.html"
@@ -97,7 +95,7 @@ class WebroomDetail(BaseExceptions, PermissionRequiredMixin, generic.DetailView)
         return get_object_or_404(WebroomTransaction, pk=self.kwargs.get('pk'))
 
 
-class ImportViewersListView(BaseExceptions, PermissionRequiredMixin, generic.ListView):
+class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
     """Ведётся повторный импорт на геткурс, после выводится
     список пользователей """
 
@@ -124,7 +122,7 @@ class ImportViewersListView(BaseExceptions, PermissionRequiredMixin, generic.Lis
         return imp.import_viewers(webinarId)
 
 
-class ExportViewersCSV(BaseExceptions, PermissionRequiredMixin, ExportCSV):
+class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
     """Генерирует CSV файл с списком импортированных людей"""
 
     model = ViewersImport
@@ -170,7 +168,7 @@ class ExportViewersCSV(BaseExceptions, PermissionRequiredMixin, ExportCSV):
         return self._create_csv()
 
 
-class HandImportView(BaseExceptions, PermissionRequiredMixin, FormView):
+class HandImportView(PermissionRequiredMixin, FormView):
     """Форма для получения параметров запроса списка вебинаров"""
 
     template_name = 'webroom/get_webroom.html'
@@ -195,7 +193,7 @@ class HandImportView(BaseExceptions, PermissionRequiredMixin, FormView):
         return initial
 
 
-class ExportWebroomListView(BaseExceptions, PermissionRequiredMixin, generic.ListView):
+class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
     """Список вебнаров в рамках ручного импорта"""
 
     model = None
@@ -232,7 +230,7 @@ class HandImportViewersListView(ImportViewersListView):
         return super()._import_gk(webinarId)
 
 
-class SettingsUpdateView(BaseExceptions, PermissionRequiredMixin, UpdateView):
+class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
     """Страница установки token внешних сервисов"""
 
     model = TokenImport
@@ -246,7 +244,7 @@ class SettingsUpdateView(BaseExceptions, PermissionRequiredMixin, UpdateView):
         return TokenImport.objects.get(user=self.request.user)
 
 
-class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, generic.DetailView):
+class SettingsDelayView(PermissionRequiredMixin, generic.DetailView):
     """Представление токенов юзера"""
 
     model = TokenImport
@@ -260,7 +258,7 @@ class SettingsDelayView(BaseExceptions, PermissionRequiredMixin, generic.DetailV
         return TokenImport.objects.get(user=self.request.user)
 
 
-class DownloadedFileImportGetcourse(BaseExceptions, PermissionRequiredMixin, generic.CreateView):
+class DownloadedFileImportGetcourse(PermissionRequiredMixin, generic.CreateView):
     """Форма загрузки CSV для импорта пользователей на Getcourse"""
 
     permission_required = ("API.can_request",)
@@ -273,7 +271,7 @@ class DownloadedFileImportGetcourse(BaseExceptions, PermissionRequiredMixin, gen
         return super().form_valid(form)
 
 
-class CorrectFileFieldImportGetcourse(BaseExceptions, PermissionRequiredMixin, FormView):
+class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, FormView):
     """Пользователь выбирает соотношение полей в последнем загруженном CSV файле и полей модели импорта"""
 
     permission_required = ("API.can_request",)
@@ -317,14 +315,14 @@ class CorrectFileFieldImportGetcourse(BaseExceptions, PermissionRequiredMixin, F
         return self.import_validation_class(request, **kwargs)
 
 
-class SuccessImportGetcourse(BaseExceptions, PermissionRequiredMixin, TemplateView):
+class SuccessImportGetcourse(PermissionRequiredMixin, TemplateView):
     """Страница после завершения импорта на Getcourse"""
 
     permission_required = ("API.can_request",)
     template_name = 'import_gk/success_import.html'
 
 
-class CSVFileImportList(BaseExceptions, PermissionRequiredMixin, generic.ListView):
+class CSVFileImportList(PermissionRequiredMixin, generic.ListView):
     """Список файлов CSV импортированных юзером"""
 
     model = WebroomTransaction
@@ -344,7 +342,7 @@ class ReimportFileGetcorse(CorrectFileFieldImportGetcourse):
     import_validation_class = ImportGetcourseValidationPK
 
 
-class Test_upload_data_FormView(BaseExceptions, PermissionRequiredMixin, FormView):
+class Test_upload_data_FormView(PermissionRequiredMixin, FormView):
     form_class = DownLoadedTestFileForm
     template_name = 'test_convert/downloaded_test_file.html'
     permission_required = ("API.can_request",)
