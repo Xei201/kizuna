@@ -13,7 +13,7 @@ def get_default_field_token():
 
 
 class WebroomTransaction(models.Model):
-    """Модель хранящая данные о переданных вебинарах и их статусы"""
+    """Model storing data about transferred webinars and their statuses"""
 
     event = models.CharField(max_length=200, verbose_name='Type_event')
     roomid = models.CharField(max_length=200, verbose_name='ID_number_webinar_room')
@@ -46,7 +46,7 @@ class WebroomTransaction(models.Model):
 
 
 class TokenImport(models.Model):
-    """Модель хранящая токены от сервисов пользователей"""
+    """Model storing tokens from user services"""
 
     token = models.UUIDField(primary_key=True,
                              default=get_default_field_token)
@@ -81,7 +81,7 @@ class TokenImport(models.Model):
 
 
 class ViewersImport(models.Model):
-    """Модель хранящая данные переданных пользователей"""
+    """Model storing data of transferred users"""
 
     name = models.CharField(
         max_length=200,
@@ -114,6 +114,8 @@ class ViewersImport(models.Model):
 
 
 class FileImportGetcourse(models.Model):
+    """Model storing data of files loaded for import to getcourse"""
+
     file = models.FileField(upload_to=settings.DIRECTORY_FROM_FILE_IMPORT,
                             verbose_name="файл")
     date_load = models.DateTimeField(auto_now_add=True)

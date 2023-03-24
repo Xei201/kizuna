@@ -29,24 +29,23 @@ from .core.permissions import SuccessToken
 logger = logging.getLogger(__name__)
 
 
+# API for the Bizon365 hook that activates the process of importing users to the getcourse
 class InitialImportAPIView(generics.CreateAPIView):
-    """API отвечающая за импорт людей из Bizon в Getcourse"""
+    """API responsible for importing people from Bizon to Getcourse"""
 
     model = WebroomTransaction
     serializer_class = WebroomSerializer
     permission_classes = (SuccessToken, )
 
-    def perform_create(self, serializer):
-        user_id = TokenImport.objects.get(token=self.request.GET.get('token')).user
-        logger.info(f"Initiation API import to Getcourse viewers from API to Bizon "
-                    f"request {self.request}")
-        serializer.save(user_id=user_id)
-
     def create(self, *args, **kwargs):
+        """Running the export and export people class"""
+
         serializer = self.get_serializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         webroom = serializer.data["webinarId"]
+        # Next, the export of people from the Bizon365 platform starts from the beginning
+        # and then their import to the Getcourse platform
         export = RequestBizon(self.request)
         if export.export_viwers(webroom):
             imp = ImportGetcorseValidation(self.request)
@@ -56,11 +55,19 @@ class InitialImportAPIView(generics.CreateAPIView):
                         f"request {self.request}")
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def perform_create(self, serializer):
+        """Matching the token with the user"""
+
+        user_id = TokenImport.objects.get(token=self.request.GET.get('token')).user
+        logger.info(f"Initiation API import to Getcourse viewers from API to Bizon "
+                    f"request {self.request}")
+        serializer.save(user_id=user_id)
+
 
 @login_required
 @permission_required("API.can_request", raise_exception=True)
 def index(request):
-    """Представление выводящее общие данные статистики"""
+    """View displaying general statistics data"""
 
     webroom_all = WebroomTransaction.objects.all().count()
     webroom_quantity = WebroomTransaction.objects.filter(user_id=request.user).count()
@@ -71,7 +78,7 @@ def index(request):
 
 
 class WebroomList(PermissionRequiredMixin, generic.ListView):
-    """Список вебинаров импортированных юзером"""
+    """List of webinars imported by the user"""
 
     model = WebroomTransaction
     context_object_name = "webrooms"
@@ -85,7 +92,7 @@ class WebroomList(PermissionRequiredMixin, generic.ListView):
 
 
 class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
-    """Данные по конкретному импорту пользователей"""
+    """Data for a specific user import"""
 
     template_name = "webroom/detail_webroom.html"
     context_object_name = "webroom"
@@ -96,8 +103,8 @@ class WebroomDetail(PermissionRequiredMixin, generic.DetailView):
 
 
 class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
-    """Ведётся повторный импорт на геткурс, после выводится
-    список пользователей """
+    """Re-importing to the getcourse is being carried out,
+    after which a list of users is displayed """
 
     model = ViewersImport
     template_name = 'webroom/list_viewers.html'
@@ -118,12 +125,15 @@ class ImportViewersListView(PermissionRequiredMixin, generic.ListView):
         return get_object_or_404(WebroomTransaction, pk=self.kwargs.get('pk')).webinarId
 
     def _import_gk(self, webinarId: str) -> bool:
+        """Transfer to a separate method is made for the convenience
+        of adjusting the VIEW operation during inheritance"""
+
         imp = RequestGetcorse(self.request)
         return imp.import_viewers(webinarId)
 
 
 class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
-    """Генерирует CSV файл с списком импортированных людей"""
+    """Generates a CSV file with a list of imported people"""
 
     model = ViewersImport
     field_names = ["name", "email", "phone", "view", "buttons", "banners", "create"]
@@ -150,6 +160,8 @@ class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
         logger.info(f"{user} create CSV file {self.filename}")
 
     def get_filename(self):
+        """The filename can be set by default or generated in this method"""
+
         if self.filename is not None:
             return self.filename
         if self.model is not None:
@@ -168,8 +180,9 @@ class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
         return self._create_csv()
 
 
+# Paths responsible for manually importing viewers to getcourse
 class HandImportView(PermissionRequiredMixin, FormView):
-    """Форма для получения параметров запроса списка вебинаров"""
+    """Form for receiving webinar list request parameters"""
 
     template_name = 'webroom/get_webroom.html'
     form_class = QuantityWebroom
@@ -193,8 +206,9 @@ class HandImportView(PermissionRequiredMixin, FormView):
         return initial
 
 
+# Lists of already completed imports with details and start re-import
 class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
-    """Список вебнаров в рамках ручного импорта"""
+    """List of webnars as part of manual import"""
 
     model = None
     template_name = 'webroom/response_webroom.html'
@@ -204,16 +218,18 @@ class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
 
     def get_queryset(self):
         webroom_quantity = int(self.kwargs.get("wq"))
+        # Start uploading data from bison365
         export = RequestBizon(self.request)
         list_webinar = export.get_web_list(webroom_quantity)
         return list_webinar
 
 
 class HandImportViewersListView(ImportViewersListView):
-    """Список пользователей импортированных в ручном режиме"""
+    """List of users imported manually"""
 
     def _get_webinar_id(self):
         webinarId = self.request.GET.get('webinarId')
+        # Check to avoid collisions in case of import of the same object
         if not WebroomTransaction.objects.filter(webinarId=webinarId).exists():
             webroom = WebroomTransaction()
             webroom.event = self.request.GET.get('event')
@@ -230,8 +246,9 @@ class HandImportViewersListView(ImportViewersListView):
         return super()._import_gk(webinarId)
 
 
+# Here the user sets his API keys for services
 class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
-    """Страница установки token внешних сервисов"""
+    """External services token setup page"""
 
     model = TokenImport
     form_class = SettingForm
@@ -245,7 +262,7 @@ class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
 
 
 class SettingsDelayView(PermissionRequiredMixin, generic.DetailView):
-    """Представление токенов юзера"""
+    """View of user tokens"""
 
     model = TokenImport
     fields = ["token_gk", "name_gk", "token_bizon"]
@@ -258,8 +275,9 @@ class SettingsDelayView(PermissionRequiredMixin, generic.DetailView):
         return TokenImport.objects.get(user=self.request.user)
 
 
+# The section is responsible for corrupting users by downloading CSV
 class DownloadedFileImportGetcourse(PermissionRequiredMixin, generic.CreateView):
-    """Форма загрузки CSV для импорта пользователей на Getcourse"""
+    """CSV upload form to import users on Getcourse"""
 
     permission_required = ("API.can_request",)
     template_name = 'import_gk/downloaded_file.html'
@@ -267,12 +285,15 @@ class DownloadedFileImportGetcourse(PermissionRequiredMixin, generic.CreateView)
     success_url = reverse_lazy('correct-field-getcourse')
 
     def form_valid(self, form):
+        """Add user params"""
+
         form.instance.user = self.request.user
         return super().form_valid(form)
 
 
 class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, FormView):
-    """Пользователь выбирает соотношение полей в последнем загруженном CSV файле и полей модели импорта"""
+    """The user selects the ratio of the fields in the last uploaded CSV file
+    and the fields of the import model"""
 
     permission_required = ("API.can_request",)
     template_name = 'import_gk/correct_field_params.html'
@@ -281,7 +302,7 @@ class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, FormView):
     import_validation_class = ImportGetcorseValidation
 
     def get(self, request, *args, **kwargs):
-        """Добавление в форму параметров choices из файла CSV"""
+        """Add choices from a CSV file to a form"""
 
         context_data = self.get_context_data()
         self.get_coices_for_form(request, context_data["form"], **kwargs)
@@ -289,21 +310,27 @@ class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, FormView):
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
+        # Loading choices form fields
         self.get_coices_for_form(request, form, **kwargs)
         if form.is_valid():
             field_position_dict = form.cleaned_data
             user = request.user
             file_data = FileImportGetcourse.objects.filter(user=user).last()
+            # The name of the import is combined from the group for the export and the date the file was loaded,
+            # it is necessary to avoid collisions when loading imports with the same data
             webroom = file_data.group_user + str(file_data.date_load)
             group = file_data.group_user
             imp = self.get_import_validation_class(request=request, **kwargs)
+            # Checking the correctness of data from CSV import into the database
             if imp.start_upload_viewers_csv_to_bd(field_position_dict):
+                # Start import to Getcourse
                 imp.start_import_to_getcorse_csv(webroom, group=group)
                 return self.form_valid(form)
 
         return self.form_invalid(form)
 
     def get_coices_for_form(self, request, form, **kwargs):
+        """Loading file fields for a select form linking an import field to a form field """
         imp = self.get_import_validation_class(request, **kwargs)
         list_choices_tuple = imp.get_choices_field()
         form.fields['email'].choices = list_choices_tuple
@@ -311,19 +338,20 @@ class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, FormView):
         form.fields['phone'].choices = list_choices_tuple
 
     def get_import_validation_class(self, request, **kwargs):
-        """Return the import validation class to use."""
+        """Return the import validation class to use"""
+
         return self.import_validation_class(request, **kwargs)
 
 
 class SuccessImportGetcourse(PermissionRequiredMixin, TemplateView):
-    """Страница после завершения импорта на Getcourse"""
+    """Page after import completed on Getcourse"""
 
     permission_required = ("API.can_request",)
     template_name = 'import_gk/success_import.html'
 
 
 class CSVFileImportList(PermissionRequiredMixin, generic.ListView):
-    """Список файлов CSV импортированных юзером"""
+    """List of CSV files imported by the user"""
 
     model = WebroomTransaction
     context_object_name = "files"
@@ -337,12 +365,18 @@ class CSVFileImportList(PermissionRequiredMixin, generic.ListView):
 
 
 class ReimportFileGetcorse(CorrectFileFieldImportGetcourse):
-    """Пользователь выбирает соотношение полей в выбранном CSV файле и полей модели импорта"""
+    """The user selects the ratio of the fields in the selected CSV file
+    and the fields of the import model"""
 
+    # The file is loaded not from the user,
+    # but from the database through changes in the file validation class
     import_validation_class = ImportGetcourseValidationPK
 
 
+# The section converts files with tests to a convenient form
 class Test_upload_data_FormView(PermissionRequiredMixin, FormView):
+    """Loading a user test file to process it and bring it to a valid form"""
+
     form_class = DownLoadedTestFileForm
     template_name = 'test_convert/downloaded_test_file.html'
     permission_required = ("API.can_request",)
@@ -364,18 +398,7 @@ class Test_upload_data_FormView(PermissionRequiredMixin, FormView):
             except TypeError:
                 raise TypeError()
 
+            # Runs a class for converting data into the correct form
             converted_data = ConvertedTestCSV.convert_data(file)
             wr.writerows(converted_data)
             return response
-
-
-
-
-
-
-
-
-
-
-
-

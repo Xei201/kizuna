@@ -5,6 +5,8 @@ logger = logging.getLogger("time_request_control")
 
 
 class RequestTimeControl:
+    """Logs request times"""
+
     def __init__(self, get_response):
         self.get_response = get_response
 

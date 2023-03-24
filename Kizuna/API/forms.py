@@ -40,7 +40,7 @@ class SettingForm(ModelForm):
         model = TokenImport
         fields = ["name_gk", "token_gk", "token_bizon"]
 
-    def clean_name_gk(self):
+    def clean_name_gk(self) -> str:
         """Проверка валидности имени акканта Getcourse"""
 
         name_gk = self.cleaned_data["name_gk"]
@@ -54,7 +54,7 @@ class SettingForm(ModelForm):
 
         return name_gk
 
-    def clean_token_bizon(self):
+    def clean_token_bizon(self) -> str:
         token = self.cleaned_data["token_bizon"]
         if self._valid_value(token):
             raise ValidationError(_("Token должен содержать цифры, буквы, - и _"))
@@ -64,7 +64,7 @@ class SettingForm(ModelForm):
 
         return token
 
-    def clean_token_gk(self):
+    def clean_token_gk(self) -> str:
         token = self.cleaned_data["token_gk"]
         name_gk = self.name_gk
         if self._valid_value(token):
@@ -86,7 +86,7 @@ class DownLoadedFileForm(ModelForm):
         model = FileImportGetcourse
         fields = ("file", "group_user")
 
-    def clean_file(self):
+    def clean_file(self) -> str:
         file_name = self.cleaned_data["file"].name
         if not file_name.endswith(".csv"):
             raise ValidationError(_("Тип файла должен быть CSV"))
@@ -96,15 +96,18 @@ class DownLoadedFileForm(ModelForm):
 
 class CorrectFieldsForm(forms.Form):
     """Форма уточнения выборки столбивков файла CSV для имяпорта в GC"""
+
     email = forms.ChoiceField()
     name = forms.ChoiceField()
     phone = forms.ChoiceField()
 
 
 class DownLoadedTestFileForm(forms.Form):
+    """Форма для загрузки файла конвертируемого тестирования"""
+
     file = forms.FileField(label="Ваш файл", help_text="Загрузите файл в формате CSV")
 
-    def clean_file(self):
+    def clean_file(self) -> str:
         file_name = self.cleaned_data["file"].name
         if not file_name.endswith(".csv"):
             raise ValidationError(_("Тип файла должен быть CSV"))

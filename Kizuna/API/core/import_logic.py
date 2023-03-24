@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImportGetcorseValidation():
-    """Занимается валидацией данных для импорта в Getcourse и вызовами импортов из request_service"""
+    """Handles data validation for imports into Getcourse and calls to imports from request_service"""
 
     def __init__(self, request, **kwargs):
         self.request = request
@@ -21,6 +21,8 @@ class ImportGetcorseValidation():
             setattr(self, key, value)
 
     def get_choices_field(self) -> list:
+        """Getting the first and second line of the file to form a select field in the form"""
+
         csv_data = self._get_csv_data()
         row1 = next(csv_data)
         row2 = next(csv_data)
@@ -96,6 +98,7 @@ class ImportGetcorseValidation():
 
 
 class ImportGetcourseValidationPK(ImportGetcorseValidation):
+    """Used when loading data not from a file but from a database"""
     def _get_file(self):
         try:
             return FileImportGetcourse.objects.get(pk=self.pk)
@@ -110,9 +113,9 @@ class ConvertedTestCSV():
 
     @staticmethod
     def convert_data(file: str) -> list:
+        """The file is parsed by parameters"""
         testing_data = ConvertedTestCSV.get_scv_data(file)
         final_result = {}
-        ss = []
         next(testing_data)
         for row in testing_data:
             if row[0] in final_result:
