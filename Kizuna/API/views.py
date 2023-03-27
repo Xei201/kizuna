@@ -24,7 +24,7 @@ from .core.export_csv import ExportCSV
 from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK, ConvertedTestCSV
 from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm, DownLoadedTestFileForm
 from .core.request_service import RequestBizon, RequestGetcorse
-from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse
+from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse, TrackedSessinBizon
 from .core.serializers import WebroomSerializer
 from .core.permissions import SuccessToken
 
@@ -297,14 +297,29 @@ class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
 
     model = TrackedSessinBizon
     permission_required = ("API.can_request",)
-    context_object_name = "Webroom"
+    context_object_name = "webrooms"
     template_name = "setting/bizon_vebroom_list_tracked.html"
     pagination = 10
 
     def get_queryset(self):
-        user_id = self.request.user
-        return TrackedSessinBizon.objects.filter(user_id=user_id)
+        user = self.request.user
+        return TrackedSessinBizon.objects.filter(user=user)
 
+
+class SessionWebroomListView(WebroomList):
+    """List webroom in session"""
+
+    def get_queryset(self):
+        pk=self.kwargs.get('pk')
+        user_id = self.request.user
+        return WebroomTransaction.objects.filter(user_id=user_id, session=pk).order_by('create')
+
+
+class WebroomSessionCreateView(PermissionRequiredMixin, generic.CreateView):
+
+    model = TrackedSessinBizon
+    form_class =
+    success_url = reverse_lazy('list-session')
 
 
 

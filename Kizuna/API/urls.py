@@ -27,6 +27,8 @@ setting_patterns = [
     path('', views.SettingsDelayView.as_view(), name="setting-delay"),
     path('my', views.SettingsUpdateView.as_view(), name="setting"),
     path('my/bizon', views.SettingsBizonConnectView.as_view(), name="setting-bizon"),
+    path('my/bizon/session', views.WebroomSessionBizonListView.as_view(), name="list-session"),
+    re_path(r'^my/bison/session/(?P<pk>\d+)', views.SessionWebroomListView.as_view(), name="session-webroom-list"),
 ]
 
 # The section is responsible for corrupting users by downloading CSV

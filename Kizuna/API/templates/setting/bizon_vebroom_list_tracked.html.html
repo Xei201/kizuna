@@ -1,0 +1,32 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>Список сессий</h1>
+
+    {% if webrooms %}
+        {% if webrooms.0 == 'Error' %}
+            <h2>{ webrooms.1 }</h2>
+        {% else %}
+            <ul class="list-group">
+
+              {% for web in webrooms %}
+              <li class="list-group-item">
+                  <p><b>Название сессии:</b> {{ web.webinarId }}</p>
+                  <p><b>Сессия:</b> {{ web.roomid }}</p>
+                  <p><b>Создана:</b> {{ web.create|date:"d.m.Y, H:i" }} </p>
+                  <p><b>Группа:</b> {{ web.result_upload }} </p>
+                  <p><b>Количество импортов:</b> {{ web.webroomtransaction_set.all.count }} </p>
+                  <p class="w-25 p-3">
+                      <a href="{{ web.get_webroom_list_url }}"
+                         class="list-group-item list-group-item-action active">Список импортированных вебинаров</a>
+                  </p>
+
+              </li>
+              {% endfor %}
+
+            </ul>
+        {% endif %}
+    {% else %}
+    {% endif %}
+{% endblock %}

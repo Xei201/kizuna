@@ -12,6 +12,29 @@ def get_default_field_token():
     return uuid.uuid4()
 
 
+class TrackedSessinBizon(models.Model):
+    """Tracked webinar sessions"""
+    session = models.CharField(max_length=200)
+    discription = models.CharField(max_length=200)
+    group_user = models.CharField(max_length=200)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True
+    )
+    create = models.DateTimeField(auto_now_add=True)
+
+    class META:
+        ordering = ["create"]
+
+    def __str__(self):
+        return self.session
+
+    def get_webroom_list_url(self):
+        return reverse('session-webroom-list', args=[str(self.id)])
+
+
 class WebroomTransaction(models.Model):
     """Model storing data about transferred webinars and their statuses"""
 
@@ -24,6 +47,12 @@ class WebroomTransaction(models.Model):
     result_upload = models.BooleanField(default=False)
     user_id = models.ForeignKey(
         User,
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True
+    )
+    session = models.ForeignKey(
+        TrackedSessinBizon,
         on_delete=models.SET_NULL,
         default=None,
         null=True
@@ -137,7 +166,6 @@ class FileImportGetcourse(models.Model):
 
     def get_import_url(self):
         return reverse('reimport-getcourse', args=[str(self.id)])
-
 
 
 
