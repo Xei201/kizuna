@@ -1,0 +1,14 @@
+{% extends "base_general_template.html" %}
+
+{% block content %}
+  <h1>Настройки</h1>
+  <p>
+    <a href="{% url 'setting-delay' %}">Вернуться к настройкам</a> |
+    <a href="{% url 'setting' %}">Добавить отслеживания сессий</a>
+  </p>
+
+  <p><strong>Введите данный URL в поле "Вебхук после создания отчета":</strong> {{ url_api }}</p>
+
+
+
+{% endblock %}

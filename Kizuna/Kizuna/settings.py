@@ -124,6 +124,9 @@ LOGIN_REDIRECT_URL = '/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+URL_SERVER = 'http://127.0.0.1:8000'
+URL_API_INTEGRATION = 'api/v1/start'
+
 # Url API service bizon for export
 URL_BIZON_API = 'https://online.bizon365.ru/api/v1'
 URL_BIZON_WEBINAR = 'webinars/reports'

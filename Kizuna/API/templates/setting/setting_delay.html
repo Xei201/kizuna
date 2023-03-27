@@ -5,7 +5,7 @@
   <p>
     <a href="{% url 'setting' %}">Изменить настройки</a> |
     {% if user_token.token_gk and user_token.token_bizon %}
-      <a href="{% url 'setting' %}">Открыть настройку подключения интеграции</a> |
+      <a href="{% url 'setting-bizon' %}">Открыть настройку подключения интеграции</a>
     {% endif %}
   </p>
 

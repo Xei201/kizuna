@@ -26,6 +26,7 @@ webroom_patterns = [
 setting_patterns = [
     path('', views.SettingsDelayView.as_view(), name="setting-delay"),
     path('my', views.SettingsUpdateView.as_view(), name="setting"),
+    path('my/bizon', views.SettingsBizonConnectView.as_view(), name="setting-bizon"),
 ]
 
 # The section is responsible for corrupting users by downloading CSV

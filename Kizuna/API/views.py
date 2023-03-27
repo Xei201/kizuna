@@ -2,6 +2,7 @@ import csv
 import logging
 import datetime
 import uuid
+from os import path
 
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -17,6 +18,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.translation import gettext_lazy as _
 from rest_framework.response import Response
 
+from Kizuna import settings
 from .core.exceptions import NoModelFoundException, NoCorrectPermission
 from .core.export_csv import ExportCSV
 from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK, ConvertedTestCSV
@@ -275,6 +277,37 @@ class SettingsDelayView(PermissionRequiredMixin, generic.DetailView):
         return TokenImport.objects.get(user=self.request.user)
 
 
+class SettingsBizonConnectView(PermissionRequiredMixin, TemplateView):
+    """Generates a webhook after the end of the webinar on bison"""
+
+    permission_required = ("API.can_request",)
+    template_name = "setting/setting_bizon_webhook.html"
+
+    def get_context_data(self, **kwargs):
+        context = {}
+        token = TokenImport.objects.get(user=self.request.user).token
+        url = path.join(settings.URL_SERVER, settings.URL_API_INTEGRATION, ("?token=" + str(token)))
+        context["url_api"] = url
+        print(url)
+        return context
+
+
+class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
+    """List of tracked webinar sessions"""
+
+    model = TrackedSessinBizon
+    permission_required = ("API.can_request",)
+    context_object_name = "Webroom"
+    template_name = "setting/bizon_vebroom_list_tracked.html"
+    pagination = 10
+
+    def get_queryset(self):
+        user_id = self.request.user
+        return TrackedSessinBizon.objects.filter(user_id=user_id)
+
+
+
+
 # The section is responsible for corrupting users by downloading CSV
 class DownloadedFileImportGetcourse(PermissionRequiredMixin, generic.CreateView):
     """CSV upload form to import users on Getcourse"""
@@ -401,4 +434,5 @@ class Test_upload_data_FormView(PermissionRequiredMixin, FormView):
             # Runs a class for converting data into the correct form
             converted_data = ConvertedTestCSV.convert_data(file)
             wr.writerows(converted_data)
+            logger.info(response)
             return response

@@ -117,14 +117,14 @@ class ConvertedTestCSV():
         testing_data = ConvertedTestCSV.get_scv_data(file)
         final_result = {}
         next(testing_data)
+
         for row in testing_data:
             if row[0] in final_result:
                 final_result[row[0]][2] = final_result[row[0]][2] + int(row[8])
             else:
                 final_result[row[0]] = [row[2][1:-1], row[3], int(row[8])]
-
+        print(list(final_result.values()))
         return list(final_result.values())
-
 
     @staticmethod
     def get_scv_data(file: str) -> list:

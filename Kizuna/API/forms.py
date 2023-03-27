@@ -6,6 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
 
+from API.core.import_logic import ConvertedTestCSV
 from API.models import TokenImport, FileImportGetcourse
 from API.core.request_service import RequestBizon, RequestGetcorse
 from Kizuna import settings
@@ -105,11 +106,11 @@ class CorrectFieldsForm(forms.Form):
 class DownLoadedTestFileForm(forms.Form):
     """Форма для загрузки файла конвертируемого тестирования"""
 
-    file = forms.FileField(label="Ваш файл", help_text="Загрузите файл в формате CSV")
+    file = forms.FileField(label="Ваш файл", help_text="Загрузите файл в формате CSV",)
 
     def clean_file(self) -> str:
-        file_name = self.cleaned_data["file"].name
-        if not file_name.endswith(".csv"):
+        file = self.cleaned_data["file"]
+        if not file.name.endswith(".csv"):
             raise ValidationError(_("Тип файла должен быть CSV"))
 
-        return self.cleaned_data["file"]
+        return file

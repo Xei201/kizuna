@@ -238,7 +238,6 @@ class RequestGetcorse(RequestImport):
                             f"success rate minimal")
             return False
 
-
     def import_viever(self, viewer: dict, webinar_id: str) -> bool:
         """Imports one viewer on Getcourse"""
         token_getcourse = self._get_token_getcourse()
