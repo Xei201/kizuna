@@ -22,7 +22,8 @@ from Kizuna import settings
 from .core.exceptions import NoModelFoundException, NoCorrectPermission
 from .core.export_csv import ExportCSV
 from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK, ConvertedTestCSV
-from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm, DownLoadedTestFileForm
+from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm, DownLoadedTestFileForm, \
+    CreateTrackedSessionForm
 from .core.request_service import RequestBizon, RequestGetcorse
 from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse, TrackedSessinBizon
 from .core.serializers import WebroomSerializer
@@ -297,7 +298,7 @@ class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
 
     model = TrackedSessinBizon
     permission_required = ("API.can_request",)
-    context_object_name = "webrooms"
+    context_object_name = "sessions"
     template_name = "setting/bizon_vebroom_list_tracked.html"
     pagination = 10
 
@@ -306,21 +307,35 @@ class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
         return TrackedSessinBizon.objects.filter(user=user)
 
 
-class SessionWebroomListView(WebroomList):
+class SessionWebroomListView(PermissionRequiredMixin, generic.DetailView):
     """List webroom in session"""
 
-    def get_queryset(self):
-        pk=self.kwargs.get('pk')
-        user_id = self.request.user
-        return WebroomTransaction.objects.filter(user_id=user_id, session=pk).order_by('create')
+    model = TrackedSessinBizon
+    permission_required = ("API.can_request",)
+    context_object_name = "session"
+    template_name = "setting/session_bizon.html"
+    pagination = 10
+
+    # Add chek user permission
+    def get_object(self, queryset=None):
+        pk = self.kwargs.get('pk')
+        return TrackedSessinBizon.objects.prefetch_related("webroomtransaction_set").get(pk=pk)
 
 
 class WebroomSessionCreateView(PermissionRequiredMixin, generic.CreateView):
+    """Create tracked session of webinar"""
 
     model = TrackedSessinBizon
-    form_class =
+    permission_required = ("API.can_request",)
+    form_class = CreateTrackedSessionForm
     success_url = reverse_lazy('list-session')
+    template_name = "setting/session_webinar_create.html"
 
+    def form_valid(self, form):
+        """Add user params"""
+
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
 
 # The section is responsible for corrupting users by downloading CSV

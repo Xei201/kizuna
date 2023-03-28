@@ -1,0 +1,34 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>Список сессий</h1>
+    <p>
+        <a href="{% url 'session-create' %}">Добавить сессию</a>
+    </p>
+    {% if sessions %}
+        {% if sessions.0 == 'Error' %}
+            <h2>{ sessions.1 }</h2>
+        {% else %}
+            <ul class="list-group">
+
+              {% for session in sessions %}
+              <li class="list-group-item">
+                  <p><b>Название сессии:</b> {{ session.description }}</p>
+                  <p><b>Сессия:</b> {{ session.session }}</p>
+                  <p><b>Создана:</b> {{ session.create|date:"d.m.Y, H:i" }} </p>
+                  <p><b>Группа:</b> {{ session.group_user }} </p>
+                  <p><b>Количество импортов:</b> {{ session.webroomtransaction_set.count }} </p>
+                  <p class="w-25 p-3">
+                      <a href="{{ session.get_webroom_list_url }}"
+                         class="list-group-item list-group-item-action active">Список импортированных вебинаров</a>
+                  </p>
+
+              </li>
+              {% endfor %}
+
+            </ul>
+        {% endif %}
+    {% else %}
+    {% endif %}
+{% endblock %}

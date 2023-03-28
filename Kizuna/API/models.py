@@ -15,7 +15,7 @@ def get_default_field_token():
 class TrackedSessinBizon(models.Model):
     """Tracked webinar sessions"""
     session = models.CharField(max_length=200)
-    discription = models.CharField(max_length=200)
+    description = models.CharField(max_length=200)
     group_user = models.CharField(max_length=200)
     user = models.ForeignKey(
         User,
@@ -32,7 +32,7 @@ class TrackedSessinBizon(models.Model):
         return self.session
 
     def get_webroom_list_url(self):
-        return reverse('session-webroom-list', args=[str(self.id)])
+        return reverse('session-bizon', args=[str(self.id)])
 
 
 class WebroomTransaction(models.Model):

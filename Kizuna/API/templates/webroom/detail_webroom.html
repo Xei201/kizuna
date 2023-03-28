@@ -10,7 +10,7 @@
   <p><strong>Дата создание:</strong> {{ webroom.create|date:"d.m.Y, H:i" }}</p>
   <p><strong>Дата обновления данных:</strong> {{ webroom.update|date:"d.m.Y, H:i" }}</p>
   <p><strong>Успешна ли загрузка на геткурс:</strong> {{ webroom.result_upload }}</p>
-  <p><strong>Всего импортировано людей:</strong> {{ webroom.viewersimport_set.all.count }}</p>
+  <p><strong>Всего импортировано людей:</strong> {{ webroom.viewersimport_set.count }}</p>
   <p>
     <a href="{{ webroom.get_export_csv_url }}">Получить список импортированных пользователей</a> |
     <a href="{{ webroom.get_import_url }}">Запустить повторный импорт пользователей</a>

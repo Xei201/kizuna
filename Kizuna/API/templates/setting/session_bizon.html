@@ -1,0 +1,31 @@
+{% extends "base_general_template.html" %}
+
+
+{% block content %}
+    <h1>Информация сессии</h1>
+
+    <p><b>Название сессии:</b> {{ session.description }}</p>
+    <p><b>Сессия:</b> {{ session.session }}</p>
+    <p><b>Создана:</b> {{ session.create|date:"d.m.Y, H:i" }} </p>
+    <p><b>Группа:</b> {{ session.group_user }} </p>
+    <p><b>Количество импортов:</b> {{ session.webroomtransaction_set.count }} </p>
+
+    {% if session.webroomtransaction_set.all %}
+            <ul class="list-group">
+
+              {% for web in session.webroomtransaction_set.all %}
+              <li class="list-group-item">
+                  <p><b>Name:</b> {{ web.webinarId }}</p>
+                  <p><b>ID:</b> {{ web.roomid }}</p>
+                  <p><b>Create:</b> {{ web.create|date:"d.m.Y, H:i" }} </p>
+                  <p><b>Result:</b> {{ web.result_upload }} </p>
+                  <p class="w-25 p-3"><a href="{{ web.get_absolute_url }}" class="list-group-item list-group-item-action active">Detail</a> </p>
+
+              </li>
+              {% endfor %}
+
+            </ul>
+    {% else %}
+      <p>There are no webroom in the library.</p>
+    {% endif %}
+{% endblock %}

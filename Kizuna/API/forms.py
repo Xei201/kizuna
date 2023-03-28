@@ -7,7 +7,7 @@ from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
 
 from API.core.import_logic import ConvertedTestCSV
-from API.models import TokenImport, FileImportGetcourse
+from API.models import TokenImport, FileImportGetcourse, TrackedSessinBizon
 from API.core.request_service import RequestBizon, RequestGetcorse
 from Kizuna import settings
 
@@ -85,7 +85,7 @@ class DownLoadedFileForm(ModelForm):
 
     class Meta:
         model = FileImportGetcourse
-        fields = ("file", "group_user")
+        fields = ["file", "group_user"]
 
     def clean_file(self) -> str:
         file_name = self.cleaned_data["file"].name
@@ -114,3 +114,21 @@ class DownLoadedTestFileForm(forms.Form):
             raise ValidationError(_("Тип файла должен быть CSV"))
 
         return file
+
+
+class CreateTrackedSessionForm(forms.ModelForm):
+    """Create tracked session of webinar in model"""
+
+    class Meta:
+        model = TrackedSessinBizon
+        fields = ["session", "description", "group_user"]
+        labels = {
+            "session": "URL вебинарной комнаты для отслеживания",
+            "description": "Название сессии",
+            "group_user": "Группа пользователей"
+        }
+
+    def clean_session(self) -> str:
+        session = self.cleaned_data["session"]
+        correct_session = session.split("/")
+        return ":".join(correct_session[-2:])

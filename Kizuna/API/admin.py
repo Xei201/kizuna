@@ -1,13 +1,17 @@
 from django.contrib import admin
-from .models import WebroomTransaction, TokenImport, ViewersImport, FileImportGetcourse
+from .models import WebroomTransaction, TokenImport, ViewersImport, FileImportGetcourse, TrackedSessinBizon
 
 
 class ViewersInline(admin.TabularInline):
     model = ViewersImport
 
 
+class WebroomInLine(admin.TabularInline):
+    model = WebroomTransaction
+
+
 @admin.register(WebroomTransaction)
-class WebrummAdmin(admin.ModelAdmin):
+class WebroomAdmin(admin.ModelAdmin):
     list_display = ("event", "roomid", "webinarId", "create", "update", "start_upload", "result_upload", "user_id")
     list_filter = ("create", "roomid")
     inlines = [ViewersInline]
@@ -26,7 +30,13 @@ class ViewsAdmin(admin.ModelAdmin):
 
 
 @admin.register(FileImportGetcourse)
-class ViewsAdmin(admin.ModelAdmin):
+class FileListAdmin(admin.ModelAdmin):
     list_display = ("file", "user", "group_user", "date_load")
     list_filter = ("date_load", )
 
+
+@admin.register(TrackedSessinBizon)
+class TrackedSessionAdmin(admin.ModelAdmin):
+    list_display = ("session", "description", "group_user", "create")
+    list_filter = ("create", )
+    inline = [WebroomInLine]

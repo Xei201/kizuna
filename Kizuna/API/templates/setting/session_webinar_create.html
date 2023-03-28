@@ -1,0 +1,17 @@
+{% extends "base_general_template.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<h1>Добавление сессии контроля вебинаров</h1>
+
+<form action="" method="post" class="w-25 p-3">
+    {% csrf_token %}
+    <table>
+    {{ form|crispy }}
+    </table>
+    <input type="submit" value="Добавить сессию" class="btn btn-success"/>
+
+</form>
+{% endblock %}
