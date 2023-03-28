@@ -31,8 +31,11 @@ class TrackedSessinBizon(models.Model):
     def __str__(self):
         return self.session
 
-    def get_webroom_list_url(self):
+    def get_absolute_url(self):
         return reverse('session-bizon', args=[str(self.id)])
+
+    def get_update_url(self):
+        return reverse("session-update", args=[str(self.id)])
 
 
 class WebroomTransaction(models.Model):

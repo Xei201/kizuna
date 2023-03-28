@@ -30,6 +30,7 @@ setting_patterns = [
     path('my/bizon/session', views.WebroomSessionBizonListView.as_view(), name="list-session"),
     path('my/bizon/session/create', views.WebroomSessionCreateView.as_view(), name="session-create"),
     re_path(r'^my/bison/session/(?P<pk>\d+)', views.SessionWebroomListView.as_view(), name="session-bizon"),
+    re_path(r'^my/bison/session/update/(?P<pk>\d+)', views.JoinTrackedSessionWithWebroom.as_view(), name="session-update"),
 ]
 
 # The section is responsible for corrupting users by downloading CSV

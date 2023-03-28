@@ -3,12 +3,18 @@
 
 {% block content %}
     <h1>Информация сессии</h1>
-
+    <p>
+        <a href="{% url 'list-session' %}">Вернуться к списку</a>
+    </p>
     <p><b>Название сессии:</b> {{ session.description }}</p>
     <p><b>Сессия:</b> {{ session.session }}</p>
     <p><b>Создана:</b> {{ session.create|date:"d.m.Y, H:i" }} </p>
     <p><b>Группа:</b> {{ session.group_user }} </p>
     <p><b>Количество импортов:</b> {{ session.webroomtransaction_set.count }} </p>
+    <p class="w-25 p-3">
+        <a href="{{ session.get_update_url }}"
+            class="list-group-item list-group-item-action active">Поиск испортов вебинаров</a>
+    </p>
 
     {% if session.webroomtransaction_set.all %}
             <ul class="list-group">

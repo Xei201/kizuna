@@ -20,7 +20,7 @@
                   <p><b>Группа:</b> {{ session.group_user }} </p>
                   <p><b>Количество импортов:</b> {{ session.webroomtransaction_set.count }} </p>
                   <p class="w-25 p-3">
-                      <a href="{{ session.get_webroom_list_url }}"
+                      <a href="{{ session.get_absolute_url }}"
                          class="list-group-item list-group-item-action active">Список импортированных вебинаров</a>
                   </p>
 

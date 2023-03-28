@@ -8,9 +8,9 @@ from django.http import HttpResponse
 from django.views.generic import TemplateView
 from rest_framework import generics, status
 from urllib.parse import urlencode
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.encoding import force_str
-from django.views import generic
+from django.views import generic, View
 from django.views.generic.edit import UpdateView, FormView
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.decorators import permission_required, login_required
@@ -336,6 +336,23 @@ class WebroomSessionCreateView(PermissionRequiredMixin, generic.CreateView):
 
         form.instance.user = self.request.user
         return super().form_valid(form)
+
+
+class JoinTrackedSessionWithWebroom(PermissionRequiredMixin, View):
+    """Searches for webroom import matching session criteria"""
+
+    permission_required = ("API.can_request",)
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        user = request.user
+        session = TrackedSessinBizon.objects.get(pk=pk)
+        WebroomTransaction.objects.filter(
+            user_id=user,
+            session=None,
+            roomid=session.session).update(session=session.id)
+        url = reverse("session-bizon", args=pk)
+        return redirect(url)
 
 
 # The section is responsible for corrupting users by downloading CSV
