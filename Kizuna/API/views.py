@@ -293,68 +293,6 @@ class SettingsBizonConnectView(PermissionRequiredMixin, TemplateView):
         return context
 
 
-class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
-    """List of tracked webinar sessions"""
-
-    model = TrackedSessinBizon
-    permission_required = ("API.can_request",)
-    context_object_name = "sessions"
-    template_name = "setting/bizon_vebroom_list_tracked.html"
-    pagination = 10
-
-    def get_queryset(self):
-        user = self.request.user
-        return TrackedSessinBizon.objects.filter(user=user)
-
-
-class SessionWebroomListView(PermissionRequiredMixin, generic.DetailView):
-    """List webroom in session"""
-
-    model = TrackedSessinBizon
-    permission_required = ("API.can_request",)
-    context_object_name = "session"
-    template_name = "setting/session_bizon.html"
-    pagination = 10
-
-    # Add chek user permission
-    def get_object(self, queryset=None):
-        pk = self.kwargs.get('pk')
-        return TrackedSessinBizon.objects.prefetch_related("webroomtransaction_set").get(pk=pk)
-
-
-class WebroomSessionCreateView(PermissionRequiredMixin, generic.CreateView):
-    """Create tracked session of webinar"""
-
-    model = TrackedSessinBizon
-    permission_required = ("API.can_request",)
-    form_class = CreateTrackedSessionForm
-    success_url = reverse_lazy('list-session')
-    template_name = "setting/session_webinar_create.html"
-
-    def form_valid(self, form):
-        """Add user params"""
-
-        form.instance.user = self.request.user
-        return super().form_valid(form)
-
-
-class JoinTrackedSessionWithWebroom(PermissionRequiredMixin, View):
-    """Searches for webroom import matching session criteria"""
-
-    permission_required = ("API.can_request",)
-
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.get('pk')
-        user = request.user
-        session = TrackedSessinBizon.objects.get(pk=pk)
-        WebroomTransaction.objects.filter(
-            user_id=user,
-            session=None,
-            roomid=session.session).update(session=session.id)
-        url = reverse("session-bizon", args=pk)
-        return redirect(url)
-
-
 # The section is responsible for corrupting users by downloading CSV
 class DownloadedFileImportGetcourse(PermissionRequiredMixin, generic.CreateView):
     """CSV upload form to import users on Getcourse"""
@@ -454,7 +392,7 @@ class ReimportFileGetcorse(CorrectFileFieldImportGetcourse):
 
 
 # The section converts files with tests to a convenient form
-class Test_upload_data_FormView(PermissionRequiredMixin, FormView):
+class TestUploadTestFormView(PermissionRequiredMixin, FormView):
     """Loading a user test file to process it and bring it to a valid form"""
 
     form_class = DownLoadedTestFileForm
@@ -483,3 +421,70 @@ class Test_upload_data_FormView(PermissionRequiredMixin, FormView):
             wr.writerows(converted_data)
             logger.info(response)
             return response
+
+
+class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
+    """List of tracked webinar sessions"""
+
+    model = TrackedSessinBizon
+    permission_required = ("API.can_request",)
+    context_object_name = "sessions"
+    template_name = "session/bizon_vebroom_list_tracked.html"
+    pagination = 10
+
+    def get_queryset(self):
+        user = self.request.user
+        return TrackedSessinBizon.objects.filter(user=user)
+
+
+class SessionWebroomListView(PermissionRequiredMixin, generic.DetailView):
+    """List webroom in session"""
+
+    model = TrackedSessinBizon
+    permission_required = ("API.can_request",)
+    context_object_name = "session"
+    template_name = "session/session_bizon.html"
+    pagination = 10
+
+    # Add chek user permission
+    def get_object(self, queryset=None):
+        pk = self.kwargs.get('pk')
+        return TrackedSessinBizon.objects.prefetch_related("webroomtransaction_set").get(pk=pk)
+
+
+class WebroomSessionCreateView(PermissionRequiredMixin, generic.CreateView):
+    """Create tracked session of webinar"""
+
+    model = TrackedSessinBizon
+    permission_required = ("API.can_request",)
+    form_class = CreateTrackedSessionForm
+    success_url = reverse_lazy('list-session')
+    template_name = "session/session_webinar_create.html"
+
+    def form_valid(self, form):
+        """Add user params"""
+
+        form.instance.user = self.request.user
+        logger.info(f"{self.request.user} create new session {form.clean_session()}")
+
+        return super().form_valid(form)
+
+
+class JoinTrackedSessionWithWebroom(PermissionRequiredMixin, View):
+    """Searches for webroom import matching session criteria"""
+
+    permission_required = ("API.can_request",)
+
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        user = request.user
+        session = TrackedSessinBizon.objects.get(pk=pk)
+        WebroomTransaction.objects.filter(
+            user_id=user,
+            session=None,
+            roomid=session.session).update(session=session.id)
+        logger.info(f"{request.user} start search webroom for session {session.session}")
+
+        url = reverse("session-bizon", args=pk)
+        return redirect(url)
+

@@ -27,10 +27,6 @@ setting_patterns = [
     path('', views.SettingsDelayView.as_view(), name="setting-delay"),
     path('my', views.SettingsUpdateView.as_view(), name="setting"),
     path('my/bizon', views.SettingsBizonConnectView.as_view(), name="setting-bizon"),
-    path('my/bizon/session', views.WebroomSessionBizonListView.as_view(), name="list-session"),
-    path('my/bizon/session/create', views.WebroomSessionCreateView.as_view(), name="session-create"),
-    re_path(r'^my/bison/session/(?P<pk>\d+)', views.SessionWebroomListView.as_view(), name="session-bizon"),
-    re_path(r'^my/bison/session/update/(?P<pk>\d+)', views.JoinTrackedSessionWithWebroom.as_view(), name="session-update"),
 ]
 
 # The section is responsible for corrupting users by downloading CSV
@@ -44,7 +40,16 @@ getcourse_import_patterns = [
 
 # The section converts files with tests to a convenient form
 test_convert_patterns = [
-    path('', views.Test_upload_data_FormView.as_view(), name="upload_test"),
+    path('', views.TestUploadTestFormView.as_view(), name="upload_test"),
+]
+
+# The section create or update tracked session of webinar
+session_pattern = [
+    path('', views.WebroomSessionBizonListView.as_view(), name="list-session"),
+    path('create', views.WebroomSessionCreateView.as_view(), name="session-create"),
+    re_path(r'^(?P<pk>\d+)', views.SessionWebroomListView.as_view(), name="session-bizon"),
+    re_path(r'^update/(?P<pk>\d+)', views.JoinTrackedSessionWithWebroom.as_view(),
+            name="session-update"),
 ]
 
 urlpatterns = [
@@ -55,4 +60,5 @@ urlpatterns = [
     path('setting', include(setting_patterns)),
     path('import_getcourse/', include(getcourse_import_patterns)),
     path('test_convert/', include(test_convert_patterns)),
+    path('session/', include(session_pattern)),
 ]
