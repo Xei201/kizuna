@@ -265,9 +265,9 @@ class TrackedSessinBizonTest(TestCase):
     def test_get_absolute_url(self):
         web = TrackedSessinBizon.objects.get(id=1)
         url = web.get_absolute_url()
-        self.assertEquals(url, "setting/my/bison/session/1")
+        self.assertEquals(url, "/session/1")
 
     def test_get_update_url(self):
         web = TrackedSessinBizon.objects.get(id=1)
-        url = web.get_absolute_url()
-        self.assertEquals(url, "setting/my/bison/session/update/1")
+        url = web.get_update_url()
+        self.assertEquals(url, "/session/update/1")

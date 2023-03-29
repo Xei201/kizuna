@@ -130,5 +130,9 @@ class CreateTrackedSessionForm(forms.ModelForm):
 
     def clean_session(self) -> str:
         session = self.cleaned_data["session"]
+        if re.fullmatch(r'https:\/\/start\.bizon365\.ru\/room\/\w+\/\w+', session) is None:
+            raise ValidationError(_("После должно содержать валидную ссылку на "
+                                    "вебинарную комнату, пример https://start.bizon365.ru/room/0000/name_web"))
+
         correct_session = session.split("/")
         return ":".join(correct_session[-2:])

@@ -10,8 +10,7 @@ from rest_framework import generics, status
 from urllib.parse import urlencode
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.encoding import force_str
-from django.views import generic, View
-from django.views.generic.edit import UpdateView, FormView
+from django.views import generic, View generic.edit.UpdateView
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -22,12 +21,13 @@ from Kizuna import settings
 from .core.exceptions import NoModelFoundException, NoCorrectPermission
 from .core.export_csv import ExportCSV
 from .core.import_logic import ImportGetcorseValidation, ImportGetcourseValidationPK, ConvertedTestCSV
-from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm, DownLoadedTestFileForm, \
-    CreateTrackedSessionForm
 from .core.request_service import RequestBizon, RequestGetcorse
-from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse, TrackedSessinBizon
 from .core.serializers import WebroomSerializer
 from .core.permissions import SuccessToken
+from .forms import QuantityWebroom, SettingForm, DownLoadedFileForm, CorrectFieldsForm, DownLoadedTestFileForm, \
+    CreateTrackedSessionForm
+from .models import WebroomTransaction, ViewersImport, TokenImport, FileImportGetcourse, TrackedSessinBizon
+
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ class ExportViewersCSV(PermissionRequiredMixin, ExportCSV):
 
 
 # Paths responsible for manually importing viewers to getcourse
-class HandImportView(PermissionRequiredMixin, FormView):
+class HandImportView(PermissionRequiredMixin, generic.edit.FormView):
     """Form for receiving webinar list request parameters"""
 
     template_name = 'webroom/get_webroom.html'
@@ -250,7 +250,7 @@ class HandImportViewersListView(ImportViewersListView):
 
 
 # Here the user sets his API keys for services
-class SettingsUpdateView(PermissionRequiredMixin, UpdateView):
+class SettingsUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     """External services token setup page"""
 
     model = TokenImport
@@ -309,7 +309,7 @@ class DownloadedFileImportGetcourse(PermissionRequiredMixin, generic.CreateView)
         return super().form_valid(form)
 
 
-class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, FormView):
+class CorrectFileFieldImportGetcourse(PermissionRequiredMixin, generic.edit.FormVie):
     """The user selects the ratio of the fields in the last uploaded CSV file
     and the fields of the import model"""
 
@@ -392,7 +392,7 @@ class ReimportFileGetcorse(CorrectFileFieldImportGetcourse):
 
 
 # The section converts files with tests to a convenient form
-class TestUploadTestFormView(PermissionRequiredMixin, FormView):
+class TestUploadTestFormView(PermissionRequiredMixin, generic.edit.FormVie):
     """Loading a user test file to process it and bring it to a valid form"""
 
     form_class = DownLoadedTestFileForm
@@ -430,7 +430,7 @@ class WebroomSessionBizonListView(PermissionRequiredMixin, generic.ListView):
     permission_required = ("API.can_request",)
     context_object_name = "sessions"
     template_name = "session/bizon_vebroom_list_tracked.html"
-    pagination = 10
+    paginate_by = 10
 
     def get_queryset(self):
         user = self.request.user
@@ -444,7 +444,7 @@ class SessionWebroomListView(PermissionRequiredMixin, generic.DetailView):
     permission_required = ("API.can_request",)
     context_object_name = "session"
     template_name = "session/session_bizon.html"
-    pagination = 10
+    paginate_by = 10
 
     # Add chek user permission
     def get_object(self, queryset=None):

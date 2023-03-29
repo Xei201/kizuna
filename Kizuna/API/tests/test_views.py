@@ -1,12 +1,13 @@
 import datetime
 import re
+from os import path
 
 from django.contrib.auth.models import User, Permission
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.encoding import force_str
 
-from API.models import TokenImport, WebroomTransaction, ViewersImport
+from API.models import TokenImport, WebroomTransaction, ViewersImport, TrackedSessinBizon
 from Kizuna import settings
 
 
@@ -79,6 +80,51 @@ class SettingViewTest(TestCase):
         self.assertEqual(resp.context["user_token"].name_gk, name_getcourse)
         self.assertEqual(resp.context["user_token"].token_bizon, tok_biz)
         self.assertEqual(resp.context["user_token"].token_gk, tok_gk)
+
+
+class BizonConnectViewTest(TestCase):
+    """Test views SettingsDelayView and SettingsUpdateView"""
+
+    def setUp(self) -> None:
+        # Создание тестовых пользователей
+        user1 = User.objects.create_user(username="test1", password="12345")
+        user1.save()
+        user2 = User.objects.create_user(username="test2", password="12345")
+        user2.save()
+        # Выдача тестовому пользователю прав доступа и тестовых токенов
+        permission = Permission.objects.get(name='Has request to GK, Bizon')
+        user2.user_permissions.add(permission)
+        user2.save()
+
+        TokenImport.objects.create(
+            user=user2,
+            token_gk="123456789",
+            token_bizon="qwerrty",
+            name_gk="test")
+
+    def test_redirect_if_user_has_no_corrected_permission_bizon_connect(self):
+        Login = self.client.login(username="test1", password="12345")
+        resp = self.client.get(reverse("setting-bizon"))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_open_sours_if_user_has_permission_bizon_connect(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse("setting-bizon"))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_template_bizon_connect(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse("setting-bizon"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "setting/setting_bizon_webhook.html")
+
+    def test_initial_data_generic_urls(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse("setting-bizon"))
+        token = TokenImport.objects.get(user_id=2).token
+        url = path.join(settings.URL_SERVER, settings.URL_API_INTEGRATION, ("?token=" + str(token)))
+        self.assertTrue('url_api' in resp.context)
+        self.assertEquals(resp.context["url_api"], url)
 
 
 class IndexViewTest(TestCase):
@@ -185,7 +231,6 @@ class MyWebroomImportViewTest(TestCase):
         self.assertTrue('is_paginated' in resp.context)
         self.assertTrue(resp.context['is_paginated'] == True)
         self.assertEqual(len(resp.context['webrooms']), 5)
-        """Test """
 
 
 class MyWebroomDelayViewTest(TestCase):
@@ -624,24 +669,25 @@ class HandImportViewersListTest(TestCase):
         self.assertEqual(resp.context['list_viewers'][0].name, name_viewer)
         self.assertEqual(resp.context['list_viewers'][0].email, email_viewer)
 
-    class ImportGetcourseTest(TestCase):
-        """Test view CSVFileImportList"""
 
-        def setUp(self) -> None:
-            # Создание тестовых пользователей
-            user1 = User.objects.create_user(username="test1", password="12345")
-            user1.save()
-            user2 = User.objects.create_user(username="test2", password="12345")
-            user2.save()
-            # Выдача тестовому пользователю прав доступа и тестовых токенов
-            permission = Permission.objects.get(name='Has request to GK, Bizon')
-            user2.user_permissions.add(permission)
-            user2.save()
-            TokenImport.objects.create(
-                user=user2,
-                token_gk=settings.GETCOURSE_TEST_API,
-                token_bizon=settings.BIZON_TEST_API,
-                name_gk="test")
+class ImportGetcourseTest(TestCase):
+    """Test view CSVFileImportList"""
+
+    def setUp(self) -> None:
+        # Создание тестовых пользователей
+        user1 = User.objects.create_user(username="test1", password="12345")
+        user1.save()
+        user2 = User.objects.create_user(username="test2", password="12345")
+        user2.save()
+        # Выдача тестовому пользователю прав доступа и тестовых токенов
+        permission = Permission.objects.get(name='Has request to GK, Bizon')
+        user2.user_permissions.add(permission)
+        user2.save()
+        TokenImport.objects.create(
+            user=user2,
+            token_gk=settings.GETCOURSE_TEST_API,
+            token_bizon=settings.BIZON_TEST_API,
+            name_gk="test")
 
     def test_redirect_if_user_has_no_corrected_permission_csf_file(self):
         Login = self.client.login(username="test1", password="12345")
@@ -660,6 +706,161 @@ class HandImportViewersListTest(TestCase):
         self.assertTemplateUsed(resp, "import_gk/list_csv_file.html")
 
 
+class SessionListTest(TestCase):
+    """Test view WebroomSessionBizonListView"""
+
+    def setUp(self) -> None:
+        # Создание тестовых пользователей
+        user1 = User.objects.create_user(username="test1", password="12345")
+        user1.save()
+        user2 = User.objects.create_user(username="test2", password="12345")
+        user2.save()
+        # Выдача тестовому пользователю прав доступа и тестовых токенов
+        permission = Permission.objects.get(name='Has request to GK, Bizon')
+        user2.user_permissions.add(permission)
+        user2.save()
+
+        # Генерация списка сессий
+        number_of_session = 50
+        session_list = []
+        for it in range(number_of_session):
+            user_pk = it % 2 + 1
+            user = User.objects.get(id=user_pk)
+            session_list.append(TrackedSessinBizon(
+                user=user,
+                session=f"24105:mr{it}",
+                description=f"test{it}",
+                group_user=f"test{it}-{it}"))
+        TrackedSessinBizon.objects.bulk_create(session_list)
+
+    def test_redirect_if_user_has_no_corrected_permission_session_list(self):
+        Login = self.client.login(username="test1", password="12345")
+        resp = self.client.get(reverse('list-session'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_open_sours_if_user_has_permission_session_list(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('list-session'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_template_session_list(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('list-session'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "session/bizon_vebroom_list_tracked.html")
+
+    def test_pagination_is_ten(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('list-session'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue('is_paginated' in resp.context)
+        self.assertTrue(resp.context['is_paginated'] == True)
+        self.assertTrue(len(resp.context['sessions']) == 10)
+
+    def test_lists_all_webroom_and_return_only_my_web(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('list-session')+'?page=3')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue('is_paginated' in resp.context)
+        self.assertTrue(resp.context['is_paginated'] == True)
+        self.assertEqual(len(resp.context['sessions']), 5)
 
 
+class SessionWebroomListTest(TestCase):
+    """Test view SessionWebroomListView"""
+
+    def setUp(self) -> None:
+        # Создание тестовых пользователей
+        user1 = User.objects.create_user(username="test1", password="12345")
+        user1.save()
+        user2 = User.objects.create_user(username="test2", password="12345")
+        user2.save()
+        # Выдача тестовому пользователю прав доступа и тестовых токенов
+        permission = Permission.objects.get(name='Has request to GK, Bizon')
+        user2.user_permissions.add(permission)
+        user2.save()
+
+        session = TrackedSessinBizon.objects.create(
+            user=user2,
+            session="24105:mr03",
+            description="test",
+            group_user="test")
+
+        # Генерация списка вебинаров к сессии
+        number_of_web = 25
+        session_list = []
+        for it in range(number_of_web):
+            session_list.append(WebroomTransaction(
+                event="webinarEnd",
+                roomid=f"24105:user1-{it}",
+                webinarId=f"24105:user1-web160{it}-02-15T19:00:-{it}",
+                session=session,
+                user_id=user2))
+
+        WebroomTransaction.objects.bulk_create(session_list)
+
+
+    def test_redirect_if_user_has_no_corrected_permission_session_list(self):
+        Login = self.client.login(username="test1", password="12345")
+        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, }))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_open_sours_if_user_has_permission_session_list(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, }))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_template_session_list(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, }))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "session/session_bizon.html")
+
+    def test_pagination_is_ten(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, }))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue('is_paginated' in resp.context)
+        # self.assertTrue(resp.context['is_paginated'] == True)
+        self.assertTrue(len(resp.context['session']['webroomtransaction_set']) == 10)
+
+    def test_lists_all_webroom_and_return_only_my_web(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, })+'?page=3')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue('is_paginated' in resp.context)
+        # self.assertTrue(resp.context['is_paginated'] == True)
+        self.assertEqual(len(resp.context['session']['webroomtransaction_set']), 5)
+
+
+class CreateSessionTest(TestCase):
+    """Test view WebroomSessionCreateView"""
+
+    def setUp(self) -> None:
+        # Создание тестовых пользователей
+        user1 = User.objects.create_user(username="test1", password="12345")
+        user1.save()
+        user2 = User.objects.create_user(username="test2", password="12345")
+        user2.save()
+        # Выдача тестовому пользователю прав доступа и тестовых токенов
+        permission = Permission.objects.get(name='Has request to GK, Bizon')
+        user2.user_permissions.add(permission)
+        user2.save()
+
+
+    def test_redirect_if_user_has_no_corrected_permission_session_list(self):
+        Login = self.client.login(username="test1", password="12345")
+        resp = self.client.get(reverse('session-create'))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_open_sours_if_user_has_permission_session_list(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('session-create'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_template_session_list(self):
+        login = self.client.login(username="test2", password="12345")
+        resp = self.client.get(reverse('session-create'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, "session/session_webinar_create.html")
 
