@@ -1,11 +1,11 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from API.models import WebroomTransaction, TokenImport, ViewersImport
+from API.models import WebroomTransaction, TokenImport, ViewersImport, TrackedSessinBizon
 
 
 class WebroomTransactionModelTest(TestCase):
-    """Тест метода WebroomTransaction"""
+    """Test for WebroomTransaction"""
 
     @classmethod
     def setUpTestData(cls):
@@ -78,7 +78,7 @@ class WebroomTransactionModelTest(TestCase):
 
 
 class TokenImportModelTest(TestCase):
-    """Тесты модели TokenImport"""
+    """Test for TokenImport"""
 
     @classmethod
     def setUpTestData(cls):
@@ -136,7 +136,7 @@ class TokenImportModelTest(TestCase):
 
 
 class ViewersImportModelTest(TestCase):
-    """Тесты модели ViewersImport"""
+    """Test for ViewersImport"""
 
     @classmethod
     def setUpTestData(cls):
@@ -224,3 +224,50 @@ class ViewersImportModelTest(TestCase):
         viewer_str = viewer.email
         self.assertEquals(str(viewer), viewer_str)
 
+
+class TrackedSessinBizonTest(TestCase):
+    """Test for TrackedSessinBizon"""
+
+    @classmethod
+    def setUpTestData(cls):
+        test_user1 = User.objects.create_user(username='testuser1', password='12345')
+        test_user1.save()
+        TrackedSessinBizon.objects.create(
+            session="24105:web230622",
+            description="test",
+            group_user="test3",
+            user=test_user1
+        )
+
+    def test_session_field(self):
+        session = TrackedSessinBizon.objects.get(id=1)
+        session_field = session._meta.get_field("session")
+        max_length = session_field.max_length
+        self.assertEquals(max_length, 200)
+
+    def test_description_field(self):
+        session = TrackedSessinBizon.objects.get(id=1)
+        session_field = session._meta.get_field("description")
+        max_length = session_field.max_length
+        self.assertEquals(max_length, 200)
+
+    def test_group_user_field(self):
+        session = TrackedSessinBizon.objects.get(id=1)
+        session_field = session._meta.get_field("group_user")
+        max_length = session_field.max_length
+        self.assertEquals(max_length, 200)
+
+    def test_str(self):
+        session = TrackedSessinBizon.objects.get(id=1)
+        session_session = session.session
+        self.assertEquals(str(session), session_session)
+
+    def test_get_absolute_url(self):
+        web = TrackedSessinBizon.objects.get(id=1)
+        url = web.get_absolute_url()
+        self.assertEquals(url, "setting/my/bison/session/1")
+
+    def test_get_update_url(self):
+        web = TrackedSessinBizon.objects.get(id=1)
+        url = web.get_absolute_url()
+        self.assertEquals(url, "setting/my/bison/session/update/1")

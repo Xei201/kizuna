@@ -2,7 +2,8 @@ import datetime
 
 from django.test import TestCase
 
-from API.forms import QuantityWebroom, SettingForm
+from API.forms import QuantityWebroom, SettingForm, CreateTrackedSessionForm
+from API.models import TrackedSessinBizon
 from Kizuna import settings
 
 
@@ -26,7 +27,7 @@ class QuantityWebroomTest(TestCase):
                      "date_max": date_max}
         form = QuantityWebroom(data=form_data)
         self.assertFalse(form.is_valid())
-        quan = -2
+        form_data["quantity_webroom"] = -2
         form = QuantityWebroom(data=form_data)
         self.assertFalse(form.is_valid())
 
@@ -114,3 +115,28 @@ class SettingFormTest(TestCase):
                      "token_bizon": token_bizon}
         form = SettingForm(data=form_data)
         self.assertFalse(form.is_valid())
+
+
+class CreateTrackedSessionFormTest(TestCase):
+    """Test for CreateTrackedSessionForm"""
+
+    def test_tracked_form_date_field_params(self):
+        form = CreateTrackedSessionForm()
+        self.assertIn("session", form.fields)
+        self.assertIn("description", form.fields)
+        self.assertIn("group_user", form.fields)
+
+    def test_label_form_field(self):
+        form = CreateTrackedSessionForm()
+        self.assertTrue(form.fields["session"].label == 'URL вебинарной комнаты для отслеживания')
+        self.assertTrue(form.fields["description"].label == 'Название сессии')
+        self.assertTrue(form.fields["group_user"].label == 'Группа пользователей')
+
+    def test_confert_data_form_field_session(self):
+        form_data = {"session": "https://start.bizon365.ru/room/24105/mr03",
+                     "description": "test",
+                     "group_user": "test"}
+        form = CreateTrackedSessionForm(data=form_data)
+        form.save()
+        session = TrackedSessinBizon.objects.get(pk=1).session
+        self.assertEqual(session, "24105:mr03")

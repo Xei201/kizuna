@@ -657,7 +657,7 @@ class HandImportViewersListTest(TestCase):
         login = self.client.login(username="test2", password="12345")
         resp = self.client.get(reverse('my-import-getcourse'))
         self.assertEqual(resp.status_code, 200)
-        self.assertTemplateUsed(resp, "import_gk/downloaded_file.html")
+        self.assertTemplateUsed(resp, "import_gk/list_csv_file.html")
 
 
 

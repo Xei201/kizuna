@@ -215,10 +215,10 @@ class RequestGetcorse(RequestImport):
         # There is a selection of a label from which users will be ported to Getcourse. In the case of import via API,
         # the name of the webinar session is used instead of this label. In case of export from a file,
         # the label specified by the user is used.
-        if group:
+        if group is None:
             group = webinar_id
 
-        if viewers_list is None or len(viewers_list) > 0:
+        if viewers_list is None or len(viewers_list) == 0:
             logger.info(f"Unsuccess import to Getcourse from webinar {webinar_id} viewers = 0")
             return False
 
