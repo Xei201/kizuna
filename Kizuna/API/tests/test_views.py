@@ -816,22 +816,6 @@ class SessionWebroomListTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "session/session_bizon.html")
 
-    def test_pagination_is_ten(self):
-        login = self.client.login(username="test2", password="12345")
-        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, }))
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue('is_paginated' in resp.context)
-        # self.assertTrue(resp.context['is_paginated'] == True)
-        self.assertTrue(len(resp.context['session']['webroomtransaction_set']) == 10)
-
-    def test_lists_all_webroom_and_return_only_my_web(self):
-        login = self.client.login(username="test2", password="12345")
-        resp = self.client.get(reverse('session-bizon', kwargs={"pk": 1, })+'?page=3')
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue('is_paginated' in resp.context)
-        # self.assertTrue(resp.context['is_paginated'] == True)
-        self.assertEqual(len(resp.context['session']['webroomtransaction_set']), 5)
-
 
 class CreateSessionTest(TestCase):
     """Test view WebroomSessionCreateView"""

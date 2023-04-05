@@ -4,13 +4,14 @@ import datetime
 import uuid
 from os import path
 
+from django.db import transaction
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 from rest_framework import generics, status
 from urllib.parse import urlencode
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.encoding import force_str
-from django.views import generic, View generic.edit.UpdateView
+from django.views import generic, View
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -230,6 +231,7 @@ class ExportWebroomListView(PermissionRequiredMixin, generic.ListView):
 class HandImportViewersListView(ImportViewersListView):
     """List of users imported manually"""
 
+    @transaction.atomic
     def _get_webinar_id(self):
         webinarId = self.request.GET.get('webinarId')
         # Check to avoid collisions in case of import of the same object
@@ -289,7 +291,6 @@ class SettingsBizonConnectView(PermissionRequiredMixin, TemplateView):
         token = TokenImport.objects.get(user=self.request.user).token
         url = path.join(settings.URL_SERVER, settings.URL_API_INTEGRATION, ("?token=" + str(token)))
         context["url_api"] = url
-        print(url)
         return context
 
 
@@ -444,7 +445,6 @@ class SessionWebroomListView(PermissionRequiredMixin, generic.DetailView):
     permission_required = ("API.can_request",)
     context_object_name = "session"
     template_name = "session/session_bizon.html"
-    paginate_by = 10
 
     # Add chek user permission
     def get_object(self, queryset=None):

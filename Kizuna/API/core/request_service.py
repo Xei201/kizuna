@@ -4,6 +4,8 @@ import logging
 import requests
 from os import path
 
+from django.db import transaction
+
 from Kizuna import settings
 from API.models import WebroomTransaction, ViewersImport, TokenImport
 
